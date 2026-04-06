@@ -377,7 +377,7 @@ function mcrun(pot,ag,mu,vol,inf,years,beq){
     qs.forEach(q=>pcts['p'+Math.round(q*100)].push(col[Math.min(Math.floor(q*n),n-1)]));
   }
   // Failure = ending below bequest target
-  return{pcts,pRuin:all.filter(p=>p[years]<beq).length/NS};
+  return{pcts,pRuin:all.filter(p=>beq>0?p[years]<beq:p[years]===0).length/NS};
 }
 
 /* ── Formatters ── */
@@ -476,7 +476,7 @@ function update(){
   const finalBal=sp[S.yr];
   const beqMet=!hasBeq||finalBal>=S.beq;
   /* Find first year pot drops below bequest (or zero) */
-  const failYr=sp.findIndex((v,i)=>i>0&&v<S.beq);
+  const failYr=sp.findIndex((v,i)=>i>0&&(S.beq>0?v<S.beq:v===0));
   const ok=failYr===-1;
   const lbls=mkL(S.yr+1);
   const beqLine=Array(S.yr+1).fill(S.beq);
