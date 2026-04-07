@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Loan vs Invest</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#F5F5F5;color:#222;font-size:13px}
+#app{max-width:1160px;margin:0 auto;padding:20px}
+.hdr{background:#416BA9;border-radius:10px;padding:22px 28px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.hdr h1{color:#fff;font-size:22px;font-weight:700;letter-spacing:-.3px}
+.hdr-sub{color:rgba(255,255,255,.7);font-size:12px;margin-top:4px}
+.hdr-right{text-align:right}
+.hdr-rlbl{color:rgba(255,255,255,.6);font-size:11px}
+.hdr-rval{color:#fff;font-size:24px;font-weight:700;margin-top:2px}
+.main{display:grid;grid-template-columns:300px 1fr;gap:20px}
+.ctrl{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);align-self:start}
+.sec{font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #416BA9;padding-bottom:6px;margin:14px 0 12px}.sec:first-child{margin-top:0}
+.sr{margin-bottom:12px}.sr-hd{display:flex;justify-content:space-between;margin-bottom:3px}
+.slbl{font-size:12px;font-weight:700;color:#444}.sval{font-size:13px;font-weight:700;color:#416BA9}
+.sub{font-size:10px;color:#aaa;margin-top:1px}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#ddd;border-radius:2px;outline:none;cursor:pointer;margin:0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#416BA9;border-radius:50%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.22)}
+.collapse-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #e0e0e0;padding-bottom:6px;margin:14px 0 0;user-select:none;transition:border-color .2s}
+.collapse-hdr:hover{border-bottom-color:#416BA9}
+.collapse-hdr .arr{font-size:9px;transition:transform .2s;color:#999}
+.collapse-hdr.open{border-bottom-color:#416BA9}
+.collapse-hdr.open .arr{transform:rotate(180deg);color:#416BA9}
+.collapse-body{overflow:hidden;max-height:0;transition:max-height .28s ease}
+.collapse-body.open{max-height:700px}
+.collapse-inner{padding-top:12px}
+.assump-block{margin-bottom:10px}
+.assump-asset{font-size:11px;font-weight:700;color:#555;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.assump-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.assump-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.asr-hd{display:flex;justify-content:space-between;margin-bottom:2px}
+.asr-lbl{font-size:10px;color:#888;font-weight:700}
+.asr-val{font-size:11px;font-weight:700;color:#416BA9}
+.reset-btn{font-size:10px;color:#888;background:none;border:1px solid #ddd;border-radius:4px;padding:3px 8px;cursor:pointer;font-family:inherit;margin-top:6px}
+.reset-btn:hover{border-color:#416BA9;color:#416BA9}
+.abar-wrap{margin-bottom:4px}
+.abar-lbl{font-size:12px;font-weight:700;color:#444;margin-bottom:8px}
+.abar{position:relative;height:48px;border-radius:8px;user-select:none;cursor:default;touch-action:none}
+.abar-inner{position:absolute;inset:0;border-radius:8px;overflow:hidden}
+.seg{position:absolute;top:0;height:100%}
+.seg-lbl{position:absolute;top:0;height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;pointer-events:none;white-space:nowrap;overflow:hidden}
+.ahandle{position:absolute;top:-4px;width:8px;height:56px;background:#fff;border-radius:4px;cursor:ew-resize;transform:translateX(-50%);box-shadow:0 0 0 1px rgba(0,0,0,.15),0 2px 8px rgba(0,0,0,.2);z-index:20;transition:box-shadow .1s}
+.ahandle:hover,.ahandle.drag{box-shadow:0 0 0 2px #416BA9,0 2px 10px rgba(0,0,0,.25)}
+.astat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.astat{border-radius:6px;padding:7px 9px;background:#EEF3FA}
+.astat-name{font-size:10px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:2px}
+.astat-pct{font-size:15px;font-weight:700}
+.astat-info{font-size:10px;color:#aaa;margin-top:1px}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid #416BA9}
+.kpi-l{font-size:10px;color:#999;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+.kpi-v{font-size:19px;font-weight:700;color:#222}
+.kpi-s{font-size:10px;color:#aaa;margin-top:1px}
+.sc-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.sc{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-left:4px solid #416BA9}
+.sc-name{font-weight:700;font-size:14px;margin-bottom:6px}
+.sc-line{display:flex;justify-content:space-between;font-size:12px;color:#888;margin-top:4px}
+.sc-val{font-weight:700;color:#222}
+.tabs{margin-bottom:0}
+.tbtn{background:#e0e0e0;color:#555;border:none;padding:8px 22px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;border-radius:6px 6px 0 0;margin-right:3px;transition:all .15s}
+.tbtn.active{background:#416BA9;color:#fff}
+.pnl{background:#fff;border-radius:0 10px 10px 10px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.cwrap{height:340px;position:relative;margin-bottom:4px}
+.leg{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:11px;color:#555}
+.lsw{width:20px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0;vertical-align:middle}
+.lln{width:24px;display:inline-block;flex-shrink:0;vertical-align:middle}
+.note{margin-top:12px;font-size:10px;color:#bbb;line-height:1.6}
+.mc-stats{margin-top:12px;display:flex;gap:24px;font-size:11px;color:#888;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:5px 8px;text-align:right;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;border-bottom:1px solid #eee}
+td{padding:5px 8px;text-align:right}
+.fw7{font-weight:700}
+footer{text-align:center;margin-top:16px;font-size:10px;color:#ccc;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="hdr">
+  <div><h1>Pay Now vs Take Loan &amp; Invest</h1><div class="hdr-sub" id="hdr-sub"></div></div>
+  <div class="hdr-right"><div class="hdr-rlbl">Blended portfolio return</div><div class="hdr-rval" id="hdr-ret"></div></div>
+</div>
+
+<div class="main">
+<div class="ctrl">
+
+  <div class="sec">Course costs</div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Annual tuition</span><span class="sval" id="v-fee"></span></div><input type="range" id="s-fee" min="5000" max="15000" step="250" value="9250"></div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Annual maintenance</span><span class="sval" id="v-maint"></span></div><input type="range" id="s-maint" min="5000" max="20000" step="500" value="13000"><div class="sub">Rent + living costs</div></div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Course length</span><span class="sval" id="v-dur"></span></div><input type="range" id="s-dur" min="3" max="6" step="1" value="3"></div>
+
+  <div class="sec">Graduate salary</div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Starting salary</span><span class="sval" id="v-sal"></span></div><input type="range" id="s-sal" min="20000" max="100000" step="1000" value="35000"></div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Real salary growth</span><span class="sval" id="v-salg"></span></div><input type="range" id="s-salg" min="0" max="6" step="0.5" value="2"><div class="sub">Above CPI p.a.</div></div>
+
+  <div class="sec">Plan 5 loan</div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Repayment threshold</span><span class="sval" id="v-thresh"></span></div><input type="range" id="s-thresh" min="20000" max="35000" step="500" value="25000"></div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">Loan interest (RPI nom.)</span><span class="sval" id="v-lint"></span></div><input type="range" id="s-lint" min="0" max="8" step="0.25" value="3.5"><div class="sub">Plan 5: RPI + 0%. RPI typically CPI + ~1%</div></div>
+  <div class="sr"><div class="sr-hd"><span class="slbl">CPI inflation</span><span class="sval" id="v-inf"></span></div><input type="range" id="s-inf" min="0" max="8" step="0.5" value="2.5"></div>
+
+  <div class="sec">Portfolio allocation</div>
+  <div style="font-size:11px;color:#888;margin-bottom:8px">Drag handles to set equity / bond / cash mix</div>
+  <div class="abar" id="abar">
+    <div class="abar-inner">
+      <div class="seg" id="seg-eq" style="left:0;background:#416BA9"></div>
+      <div class="seg" id="seg-bd" style="background:#9FCFCA"></div>
+      <div class="seg" id="seg-ca" style="right:0;background:#B14FC5"></div>
+      <div class="seg-lbl" id="lbl-eq" style="color:#fff;left:0"></div>
+      <div class="seg-lbl" id="lbl-bd" style="color:#1a5e59"></div>
+      <div class="seg-lbl" id="lbl-ca" style="color:#fff"></div>
+    </div>
+    <div class="ahandle" id="h1"></div>
+    <div class="ahandle" id="h2"></div>
+  </div>
+  <div class="astat-row">
+    <div class="astat" style="border-left:3px solid #416BA9"><div class="astat-name">Equity</div><div class="astat-pct" id="astat-eq" style="color:#416BA9"></div><div class="astat-info" id="astat-eq-i"></div></div>
+    <div class="astat" style="border-left:3px solid #9FCFCA"><div class="astat-name">Bonds</div><div class="astat-pct" id="astat-bd" style="color:#2a8a84"></div><div class="astat-info" id="astat-bd-i"></div></div>
+    <div class="astat" style="border-left:3px solid #B14FC5"><div class="astat-name">Cash</div><div class="astat-pct" id="astat-ca" style="color:#8a3aa0"></div><div class="astat-info" id="astat-ca-i"></div></div>
+  </div>
+
+  <div class="collapse-hdr" id="asum-hdr" onclick="toggleSection('asum')">
+    Asset class assumptions <span class="arr">&#9660;</span>
+  </div>
+  <div class="collapse-body" id="asum-body">
+    <div class="collapse-inner">
+      <div class="assump-block"><div class="assump-asset"><span class="assump-dot" style="background:#416BA9"></span>Global Equity</div><div class="assump-grid"><div><div class="asr-hd"><span class="asr-lbl">Return</span><span class="asr-val" id="v-eqR"></span></div><input type="range" id="s-eqR" min="0" max="15" step="0.5" value="7"></div><div><div class="asr-hd"><span class="asr-lbl">Volatility</span><span class="asr-val" id="v-eqV"></span></div><input type="range" id="s-eqV" min="1" max="30" step="0.5" value="16"></div></div></div>
+      <div class="assump-block"><div class="assump-asset"><span class="assump-dot" style="background:#9FCFCA"></span>Bonds</div><div class="assump-grid"><div><div class="asr-hd"><span class="asr-lbl">Return</span><span class="asr-val" id="v-bdR"></span></div><input type="range" id="s-bdR" min="0" max="10" step="0.5" value="4"></div><div><div class="asr-hd"><span class="asr-lbl">Volatility</span><span class="asr-val" id="v-bdV"></span></div><input type="range" id="s-bdV" min="0.5" max="20" step="0.5" value="6"></div></div></div>
+      <div class="assump-block"><div class="assump-asset"><span class="assump-dot" style="background:#B14FC5"></span>Cash</div><div class="assump-grid"><div><div class="asr-hd"><span class="asr-lbl">Return</span><span class="asr-val" id="v-caR"></span></div><input type="range" id="s-caR" min="0" max="8" step="0.25" value="3"></div><div><div class="asr-hd"><span class="asr-lbl">Volatility</span><span class="asr-val" id="v-caV"></span></div><input type="range" id="s-caV" min="0" max="5" step="0.25" value="0.5"></div></div></div>
+      <div class="assump-block" style="margin-bottom:4px"><div class="assump-asset"><span style="font-size:10px;color:#888">Equity–Bond Correlation</span></div><div><div class="asr-hd"><span class="asr-lbl">ρ (rho)</span><span class="asr-val" id="v-rho"></span></div><input type="range" id="s-rho" min="-1" max="1" step="0.05" value="-0.2"></div><div class="sub" style="margin-top:3px">Negative = diversification benefit</div></div>
+      <button class="reset-btn" onclick="resetAssumptions()">↺ Reset to defaults</button>
+    </div>
+  </div>
+
+  <div class="sr" style="margin-top:14px"><div class="sr-hd"><span class="slbl">MC simulations</span><span class="sval" id="v-nsim"></span></div><input type="range" id="s-nsim" min="200" max="2000" step="200" value="800"></div>
+
+</div>
+
+<!-- Right panel -->
+<div>
+  <div class="sc-row" id="cards"></div>
+  <div class="kpi-row" id="kpis"></div>
+  <div class="tabs">
+    <button class="tbtn active" id="tab-w" onclick="switchTab('w')">Wealth over time</button>
+    <button class="tbtn" id="tab-mc" onclick="switchTab('mc')">Monte Carlo fan</button>
+    <button class="tbtn" id="tab-sal" onclick="switchTab('sal')">Salary breakeven</button>
+    <button class="tbtn" id="tab-cf" onclick="switchTab('cf')">Year-by-year</button>
+  </div>
+  <div class="pnl" id="pnl-w">
+    <div class="leg" id="leg-w"></div>
+    <div class="cwrap"><canvas id="ch-w"></canvas></div>
+    <div class="note" id="note-w"></div>
+  </div>
+  <div class="pnl" id="pnl-mc" style="display:none">
+    <div class="leg" id="leg-mc"></div>
+    <div class="cwrap"><canvas id="ch-mc"></canvas></div>
+    <div class="mc-stats" id="mc-stats"></div>
+    <div class="note" id="note-mc"></div>
+  </div>
+  <div class="pnl" id="pnl-sal" style="display:none">
+    <div class="leg" id="leg-sal"></div>
+    <div class="cwrap"><canvas id="ch-sal"></canvas></div>
+    <div class="note" id="note-sal"></div>
+  </div>
+  <div class="pnl" id="pnl-cf" style="display:none">
+    <div style="overflow-x:auto"><table id="cf-tbl"></table></div>
+    <div class="note" id="note-cf"></div>
+  </div>
+</div>
+</div>
+
+<footer>Plan 5 loan: 9% above threshold, RPI + 0% interest, 40-year term. Monte Carlo uses normally distributed annual returns. No charges, CGT, or wrapper structure modelled. For illustration only.</footer>
+</div>
+
+<script>
+var G = function(id) { return document.getElementById(id); };
+var LY = 40;
+
+var ADEF = {eqR:7, eqV:16, bdR:4, bdV:6, caR:3, caV:0.5, rho:-0.2};
+var P = {
+  fee:9250, maint:13000, dur:3,
+  sal:35000, salg:2,
+  thresh:25000, lint:3.5, inf:2.5,
+  eq:80, bd:15,
+  nsim:800
+};
+// Copy defaults
+for (var k in ADEF) P[k] = ADEF[k];
+
+var p1 = P.eq;
+var p2 = P.eq + P.bd;
+
+// Formatters
+function pound(v) { return '£' + Math.round(Math.max(0, v)).toLocaleString('en-GB'); }
+function poundK(v) { v = Math.max(0, v); if (v >= 1e6) return '£' + (v/1e6).toFixed(1) + 'm'; if (v >= 1e3) return '£' + Math.round(v/1e3) + 'k'; return '£' + Math.round(v); }
+function pf(v) { return (+v).toFixed(1) + '%'; }
+
+// Random normal
+function randn() {
+  var u, v;
+  do { u = Math.random(); } while (!u);
+  do { v = Math.random(); } while (!v);
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+}
+
+// Portfolio blend
+function blend() {
+  var wE = P.eq/100, wB = P.bd/100, wC = Math.max(0, 100 - P.eq - P.bd)/100;
+  var mu = wE * P.eqR + wB * P.bdR + wC * P.caR;
+  var variance = Math.pow(wE * P.eqV, 2) + Math.pow(wB * P.bdV, 2) + Math.pow(wC * P.caV, 2) + 2 * wE * wB * P.eqV * P.bdV * P.rho;
+  return {mu: mu, vol: Math.sqrt(Math.max(0, variance))};
+}
+
+// Loan simulation
+function simLoan(totalBorrowed, sal, salg, thresh, lintNom, inf, yrs) {
+  var debt = totalBorrowed;
+  var th = thresh;
+  var s = sal;
+  var totalPaid = 0;
+  var paidOff = false;
+  var paidYear = yrs;
+  var payments = [];
+  var balances = [debt];
+
+  for (var y = 1; y <= yrs; y++) {
+    // Threshold frozen for first 2 years then grows with CPI
+    if (y > 2) th = th * (1 + inf/100);
+    // Interest accrues on balance
+    debt = debt * (1 + lintNom/100);
+    // Repayment: 9% of salary above threshold
+    var pay = Math.max(0, Math.min(debt, (s - th) * 0.09));
+    debt = Math.max(0, debt - pay);
+    totalPaid += pay;
+    s = s * (1 + inf/100 + salg/100);
+    payments.push({year: y, payment: pay});
+    balances.push(debt);
+    if (debt <= 0 && !paidOff) { paidOff = true; paidYear = y; debt = 0; }
+  }
+  return {totalPaid: totalPaid, paidOff: paidOff, paidYear: paidYear, finalDebt: Math.max(0, debt), payments: payments, balances: balances};
+}
+
+// Deterministic investment path
+function detPath(lump, mu, yrs) {
+  var b = lump;
+  var path = [b];
+  for (var y = 1; y <= yrs; y++) { b = b * (1 + mu/100); path.push(b); }
+  return path;
+}
+
+// Monte Carlo
+function mcRun(lump, mu, vol, yrs, nsim) {
+  var all = [];
+  for (var s = 0; s < nsim; s++) {
+    var b = lump;
+    var path = [b];
+    for (var y = 1; y <= yrs; y++) {
+      b = Math.max(0, b * (1 + mu/100 + vol/100 * randn()));
+      path.push(b);
+    }
+    all.push(path);
+  }
+  var qs = [0.1, 0.25, 0.5, 0.75, 0.9];
+  var pc = {};
+  qs.forEach(function(q) { pc['p' + Math.round(q*100)] = []; });
+  for (var y = 0; y <= yrs; y++) {
+    var col = all.map(function(p) { return p[y]; }).sort(function(a, b) { return a - b; });
+    var n = col.length;
+    qs.forEach(function(q) {
+      pc['p' + Math.round(q*100)].push(col[Math.min(Math.floor(q * n), n - 1)]);
+    });
+  }
+  return {pc: pc, all: all};
+}
+
+// Charts
+var chW = null, chMc = null, chSal = null;
+
+function initCharts() {
+  var axOpts = {
+    y: {grid: {color: '#f0f0f0'}, ticks: {callback: function(v) { return poundK(v); }, font: {family: "'Gotham','Segoe UI',sans-serif", size: 11}}},
+    x: {grid: {display: false}, ticks: {font: {family: "'Gotham','Segoe UI',sans-serif", size: 10}, maxTicksLimit: 12}}
+  };
+
+  chW = new Chart(G('ch-w').getContext('2d'), {
+    type: 'line',
+    data: {labels: [], datasets: []},
+    options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {mode: 'index', callbacks: {label: function(c) { return c.dataset.label + ': ' + pound(c.raw); }}}}, scales: JSON.parse(JSON.stringify(axOpts))}
+  });
+
+  chMc = new Chart(G('ch-mc').getContext('2d'), {
+    type: 'line',
+    data: {labels: [], datasets: []},
+    options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {mode: 'index', filter: function(i) { return !i.dataset.label.startsWith('_'); }, callbacks: {label: function(c) { return c.dataset.label.startsWith('_') ? null : c.dataset.label + ': ' + pound(c.raw); }}}}, scales: JSON.parse(JSON.stringify(axOpts))}
+  });
+
+  chSal = new Chart(G('ch-sal').getContext('2d'), {
+    type: 'line',
+    data: {labels: [], datasets: []},
+    options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c) { return c.dataset.label + ': ' + pound(c.raw); }}}},
+      scales: {
+        x: {title: {display: true, text: 'Starting salary', font: {size: 11}}, grid: {display: false}, ticks: {font: {size: 10}}},
+        y: {grid: {color: '#f0f0f0'}, ticks: {callback: function(v) { return poundK(v); }, font: {size: 11}}}
+      }
+    }
+  });
+}
+
+// Allocation bar
+var abar = null;
+var dragging = null;
+
+function setupBar() {
+  abar = G('abar');
+  G('h1').addEventListener('mousedown', function(e) { dragging = 1; G('h1').classList.add('drag'); e.preventDefault(); e.stopPropagation(); });
+  G('h2').addEventListener('mousedown', function(e) { dragging = 2; G('h2').classList.add('drag'); e.preventDefault(); e.stopPropagation(); });
+  G('h1').addEventListener('touchstart', function(e) { dragging = 1; G('h1').classList.add('drag'); e.preventDefault(); }, {passive: false});
+  G('h2').addEventListener('touchstart', function(e) { dragging = 2; G('h2').classList.add('drag'); e.preventDefault(); }, {passive: false});
+
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('touchmove', onDrag, {passive: false});
+  document.addEventListener('mouseup', function() { if (dragging) { G('h' + dragging).classList.remove('drag'); dragging = null; } });
+  document.addEventListener('touchend', function() { if (dragging) { G('h' + dragging).classList.remove('drag'); dragging = null; } });
+}
+
+function barPct(e) {
+  var rect = abar.getBoundingClientRect();
+  var cx = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.round(Math.max(0, Math.min(100, (cx - rect.left) / rect.width * 100)));
+}
+
+function onDrag(e) {
+  if (!dragging) return;
+  var pos = barPct(e);
+  if (dragging === 1) { p1 = Math.max(0, Math.min(100, pos)); p2 = Math.max(p1, p2); }
+  else { p2 = Math.max(0, Math.min(100, pos)); p1 = Math.min(p1, p2); }
+  P.eq = p1;
+  P.bd = Math.max(0, p2 - p1);
+  updateBar();
+  update();
+}
+
+function updateBar() {
+  var eq = P.eq, bd = P.bd, ca = Math.max(0, 100 - eq - bd);
+  G('seg-eq').style.width = eq + '%';
+  G('seg-bd').style.left = eq + '%'; G('seg-bd').style.width = bd + '%';
+  G('seg-ca').style.width = ca + '%';
+  G('lbl-eq').style.left = '0'; G('lbl-eq').style.width = eq + '%'; G('lbl-eq').textContent = eq >= 10 ? eq + '%' : '';
+  G('lbl-bd').style.left = eq + '%'; G('lbl-bd').style.width = bd + '%'; G('lbl-bd').textContent = bd >= 10 ? bd + '%' : '';
+  G('lbl-ca').style.right = '0'; G('lbl-ca').style.width = ca + '%'; G('lbl-ca').textContent = ca >= 10 ? ca + '%' : '';
+  G('h1').style.left = p1 + '%'; G('h2').style.left = p2 + '%';
+  G('astat-eq').textContent = eq + '%'; G('astat-bd').textContent = bd + '%'; G('astat-ca').textContent = ca + '%';
+  G('astat-eq-i').textContent = pf(P.eqR) + ' ret · ' + pf(P.eqV) + ' vol';
+  G('astat-bd-i').textContent = pf(P.bdR) + ' ret · ' + pf(P.bdV) + ' vol';
+  G('astat-ca-i').textContent = pf(P.caR) + ' ret · ' + pf(P.caV) + ' vol';
+}
+
+function toggleSection(id) {
+  var hdr = G(id + '-hdr'), body = G(id + '-body');
+  var isOpen = body.classList.contains('open');
+  hdr.classList.toggle('open', !isOpen);
+  body.classList.toggle('open', !isOpen);
+}
+
+function resetAssumptions() {
+  for (var k in ADEF) P[k] = ADEF[k];
+  G('s-eqR').value = P.eqR; G('s-eqV').value = P.eqV;
+  G('s-bdR').value = P.bdR; G('s-bdV').value = P.bdV;
+  G('s-caR').value = P.caR; G('s-caV').value = P.caV;
+  G('s-rho').value = P.rho;
+  update();
+}
+
+function update() {
+  var fee = P.fee, maint = P.maint, dur = P.dur, sal = P.sal, salg = P.salg;
+  var thresh = P.thresh, lint = P.lint, inf = P.inf, nsim = P.nsim;
+  var total = (fee + maint) * dur;
+  var b = blend();
+  var mu = b.mu, vol = b.vol;
+  var realRet = ((1 + mu/100) / (1 + inf/100) - 1) * 100;
+  var realLint = ((1 + lint/100) / (1 + inf/100) - 1) * 100;
+  var ca = Math.max(0, 100 - P.eq - P.bd);
+  var labels = [];
+  for (var i = 0; i <= LY; i++) labels.push('Yr ' + i);
+
+  // Header
+  G('hdr-sub').textContent = pound(total) + ' total cost · ' + P.eq + '/' + P.bd + '/' + ca + ' equity/bonds/cash · ' + pf(vol) + ' σ';
+  G('hdr-ret').textContent = pf(mu) + ' nom · ' + pf(realRet) + ' real';
+
+  // Run models
+  var loan = simLoan(total, sal, salg, thresh, lint, inf, LY);
+  var dp = detPath(total, mu, LY);
+  var mc = mcRun(total, mu, vol, LY, nsim);
+
+  // Cumulative loan repayments
+  var loanCum = [];
+  for (var y = 0; y <= LY; y++) loanCum.push(0);
+  loan.payments.forEach(function(p) { for (var y = p.year; y <= LY; y++) loanCum[y] += p.payment; });
+
+  // Net wealth paths
+  var wealthB_det = dp.map(function(v, y) { return v - loanCum[y]; });
+
+  // Strategy cards
+  G('cards').innerHTML =
+    '<div class="sc" style="border-left-color:#416BA9"><div class="sc-name" style="color:#416BA9">Pay now</div>' +
+    '<div class="sc-line"><span>Total cost</span><span class="sc-val">' + pound(total) + '</span></div>' +
+    '<div class="sc-line"><span>Investment pot</span><span class="sc-val">£0</span></div>' +
+    '<div class="sc-line"><span>Net wealth at yr ' + LY + '</span><span class="sc-val">£0</span></div></div>' +
+    '<div class="sc" style="border-left-color:#9FCFCA"><div class="sc-name" style="color:#2a8a84">Take loan + invest</div>' +
+    '<div class="sc-line"><span>Amount invested</span><span class="sc-val">' + pound(total) + '</span></div>' +
+    '<div class="sc-line"><span>Loan repaid (nominal)</span><span class="sc-val">' + pound(loan.totalPaid) + (loan.paidOff ? '' : ' (written off)') + '</span></div>' +
+    '<div class="sc-line"><span>Det. pot yr ' + LY + '</span><span class="sc-val">' + pound(dp[LY]) + '</span></div>' +
+    '<div class="sc-line"><span>Det. net wealth</span><span class="sc-val" style="color:' + (dp[LY] - loan.totalPaid > 0 ? '#1a7a35' : '#c44') + '">' + pound(dp[LY] - loan.totalPaid) + '</span></div></div>';
+
+  // KPIs
+  var pWin = mc.all.filter(function(p) { return p[LY] > loan.totalPaid; }).length / nsim;
+  G('kpis').innerHTML =
+    '<div class="kpi"><div class="kpi-l">Blended Return</div><div class="kpi-v">' + pf(mu) + '</div><div class="kpi-s">' + pf(realRet) + ' real</div></div>' +
+    '<div class="kpi"><div class="kpi-l">Portfolio Vol</div><div class="kpi-v">' + pf(vol) + '</div><div class="kpi-s">annual σ</div></div>' +
+    '<div class="kpi"><div class="kpi-l">Real Loan Rate</div><div class="kpi-v">' + pf(realLint) + '</div><div class="kpi-s">RPI ' + pf(lint) + ' − CPI ' + pf(inf) + '</div></div>' +
+    '<div class="kpi" style="border-top-color:' + (pWin > 0.6 ? '#1a7a35' : '#c44') + '"><div class="kpi-l">P(Invest Wins)</div><div class="kpi-v" style="color:' + (pWin > 0.6 ? '#1a7a35' : '#c44') + '">' + (pWin * 100).toFixed(0) + '%</div><div class="kpi-s">pot > loan cost at yr ' + LY + '</div></div>';
+
+  // ── Tab 1: Wealth over time ──
+  G('leg-w').innerHTML =
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Invest: net wealth (det.)</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #9FCFCA"></span>Investment pot</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px solid #B14FC5"></span>Cum. loan repaid</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:1.5px dashed rgba(65,107,169,0.3)"></span>Pay now (£0)</span>';
+
+  chW.data.labels = labels;
+  chW.data.datasets = [
+    {label: 'Investment pot', data: dp, borderColor: '#9FCFCA', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, tension: 0.3, fill: false},
+    {label: 'Cum. loan repaid', data: loanCum, borderColor: '#B14FC5', pointRadius: 0, borderWidth: 2, tension: 0.1, fill: false},
+    {label: 'Invest: net wealth', data: wealthB_det, borderColor: '#416BA9', pointRadius: 0, borderWidth: 2.5, tension: 0.3, fill: false},
+    {label: 'Pay now: net wealth', data: labels.map(function() { return 0; }), borderColor: 'rgba(65,107,169,0.25)', borderDash: [4,4], pointRadius: 0, borderWidth: 1.5, tension: 0, fill: false}
+  ];
+  chW.update('none');
+
+  G('note-w').textContent = 'Net wealth = investment pot minus cumulative loan repayments. "Pay now" always sits at £0 — the money is spent. ' +
+    (loan.paidOff ? 'Loan fully repaid by year ' + loan.paidYear + ' — after that the pot grows unencumbered.' : 'Loan written off at year 40 with ' + pound(loan.finalDebt) + ' forgiven — the graduate never repays the full balance.');
+
+  // ── Tab 2: MC fan ──
+  var mcNet = {};
+  ['p10','p25','p50','p75','p90'].forEach(function(k) {
+    mcNet[k] = mc.pc[k].map(function(v, y) { return v - loanCum[y]; });
+  });
+
+  G('leg-mc').innerHTML =
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.12)"></span>P10–P90 range</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.30)"></span>P25–P75 range</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Median net wealth</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #9FCFCA"></span>Det. net wealth</span>';
+
+  chMc.data.labels = labels;
+  chMc.data.datasets = [
+    {label: '_p90', data: mcNet.p90, fill: '+1', backgroundColor: 'rgba(65,107,169,0.10)', borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
+    {label: '_p10', data: mcNet.p10, fill: false, borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
+    {label: '_p75', data: mcNet.p75, fill: '+1', backgroundColor: 'rgba(65,107,169,0.18)', borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
+    {label: '_p25', data: mcNet.p25, fill: false, borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
+    {label: 'Median net wealth', data: mcNet.p50, fill: false, borderColor: '#416BA9', pointRadius: 0, borderWidth: 2.5, tension: 0.3},
+    {label: 'Det. net wealth', data: wealthB_det, fill: false, borderColor: '#9FCFCA', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, tension: 0.3}
+  ];
+  chMc.update('none');
+
+  G('mc-stats').innerHTML =
+    '<span>Median net yr ' + LY + ': <strong>' + pound(mcNet.p50[LY]) + '</strong></span>' +
+    '<span>P25: <strong>' + pound(mcNet.p25[LY]) + '</strong></span>' +
+    '<span>P10: <strong>' + pound(mcNet.p10[LY]) + '</strong></span>' +
+    '<span>P(invest wins): <strong>' + (pWin * 100).toFixed(0) + '%</strong></span>';
+
+  G('note-mc').textContent = 'Net wealth = pot minus cumulative repayments. "Pay now" always ends at £0 — any positive net wealth here means investing won. ' +
+    (loan.paidOff ? '' : 'The loan write-off means ' + pound(loan.finalDebt) + ' of debt is forgiven — the invest strategy benefits from both the write-off and the compounded pot.');
+
+  // ── Tab 3: Salary breakeven ──
+  var salRange = [];
+  for (var s = 20000; s <= 100000; s += 2000) salRange.push(s);
+  var repaidBySal = salRange.map(function(s) { return simLoan(total, s, salg, thresh, lint, inf, LY).totalPaid; });
+
+  G('leg-sal').innerHTML =
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Total loan repaid</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.10)"></span>Amount borrowed</span>';
+
+  chSal.data.labels = salRange.map(function(s) { return '£' + (s/1000) + 'k'; });
+  chSal.data.datasets = [
+    {label: 'Amount borrowed', data: salRange.map(function() { return total; }), borderColor: 'rgba(65,107,169,0.3)', backgroundColor: 'rgba(65,107,169,0.05)', fill: true, pointRadius: 0, borderWidth: 1.5, borderDash: [4,3], tension: 0},
+    {label: 'Total loan repaid', data: repaidBySal, borderColor: '#416BA9', pointRadius: 0, borderWidth: 2.5, tension: 0.3, fill: false}
+  ];
+  chSal.update('none');
+
+  var beIdx = -1;
+  for (var i = 0; i < repaidBySal.length; i++) { if (repaidBySal[i] >= total) { beIdx = i; break; } }
+  var beSal = beIdx >= 0 ? salRange[beIdx] : null;
+  G('note-sal').textContent = beSal ?
+    'Breakeven starting salary: ~' + pound(beSal) + '. Below this, the loan is partially written off — the graduate never repays the full balance, so the loan is strictly cheaper than paying upfront even before investment returns. Above it, RPI interest means total repayments exceed the original sum.' :
+    'At all salaries in this range, the loan is never fully repaid — the write-off makes the loan strictly cheaper than paying outright regardless.';
+
+  // ── Tab 4: Year-by-year ──
+  var milestones = [0,1,3,5,10,15,20,25,30,35,40];
+  var msFiltered = milestones.filter(function(y) { return y <= LY; });
+  var thtml = '<thead><tr style="border-bottom:2px solid #416BA9">';
+  ['Year','Pot (det.)','Pot (median)','Pot (P25)','Loan balance','Cum. repaid','Net wealth (median)'].forEach(function(h) {
+    thtml += '<th style="padding:5px 8px;text-align:right">' + h + '</th>';
+  });
+  thtml += '</tr></thead><tbody>';
+  msFiltered.forEach(function(y) {
+    var cr = loanCum[y];
+    var netW = mc.pc.p50[y] - cr;
+    var col = netW >= 0 ? '#1a7a35' : '#c44';
+    thtml += '<tr style="border-bottom:1px solid #f5f5f5' + (y % 10 === 0 ? ';background:#fafafa' : '') + '">' +
+      '<td style="padding:5px 8px;text-align:right;font-weight:700">' + y + '</td>' +
+      '<td style="padding:5px 8px;text-align:right">' + pound(dp[y]) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right">' + pound(mc.pc.p50[y]) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right">' + pound(mc.pc.p25[y]) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right">' + pound(loan.balances[y] || 0) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right">' + pound(cr) + '</td>' +
+      '<td style="padding:5px 8px;text-align:right;font-weight:700;color:' + col + '">' + pound(netW) + '</td></tr>';
+  });
+  thtml += '</tbody>';
+  G('cf-tbl').innerHTML = thtml;
+  G('note-cf').textContent = 'Net wealth = median pot minus cumulative repayments. Positive means the invest strategy is ahead of pay now.';
+
+  // Slider labels
+  G('v-fee').textContent = pound(P.fee); G('v-maint').textContent = pound(P.maint); G('v-dur').textContent = P.dur + ' yrs';
+  G('v-sal').textContent = pound(P.sal); G('v-salg').textContent = pf(P.salg);
+  G('v-thresh').textContent = pound(P.thresh); G('v-lint').textContent = pf(P.lint); G('v-inf').textContent = pf(P.inf);
+  G('v-eqR').textContent = pf(P.eqR); G('v-eqV').textContent = pf(P.eqV);
+  G('v-bdR').textContent = pf(P.bdR); G('v-bdV').textContent = pf(P.bdV);
+  G('v-caR').textContent = pf(P.caR); G('v-caV').textContent = pf(P.caV);
+  G('v-rho').textContent = P.rho.toFixed(2); G('v-nsim').textContent = P.nsim;
+
+  updateBar();
+}
+
+function switchTab(t) {
+  ['w','mc','sal','cf'].forEach(function(k) {
+    G('pnl-' + k).style.display = (k === t) ? 'block' : 'none';
+    G('tab-' + k).classList.toggle('active', k === t);
+  });
+  if (t === 'w') chW.resize();
+  if (t === 'mc') chMc.resize();
+  if (t === 'sal') chSal.resize();
+}
+
+// Bind sliders
+var sliders = [
+  ['s-fee','fee'],['s-maint','maint'],['s-dur','dur'],['s-sal','sal'],['s-salg','salg'],
+  ['s-thresh','thresh'],['s-lint','lint'],['s-inf','inf'],['s-nsim','nsim'],
+  ['s-eqR','eqR'],['s-eqV','eqV'],['s-bdR','bdR'],['s-bdV','bdV'],
+  ['s-caR','caR'],['s-caV','caV'],['s-rho','rho']
+];
+sliders.forEach(function(pair) {
+  G(pair[0]).addEventListener('input', function() { P[pair[1]] = +this.value; update(); });
+});
+
+// Init
+initCharts();
+setupBar();
+updateBar();
+update();
+</script>
+</body>
+</html>
