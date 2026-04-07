@@ -78,6 +78,19 @@ th{padding:5px 8px;text-align:right;font-size:10px;font-weight:700;color:#999;te
 td{padding:5px 8px;text-align:right}
 .fw7{font-weight:700}
 footer{text-align:center;margin-top:16px;font-size:10px;color:#ccc;line-height:1.6}
+.intro{background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:20px;font-size:13px;color:#555;line-height:1.7}
+.intro h2{font-size:16px;font-weight:700;color:#416BA9;margin:0 0 10px}
+.intro p{margin:0 0 10px}.intro p:last-child{margin:0}
+.intro strong{color:#222}
+.narr{font-size:11px;color:#888;line-height:1.6;margin:6px 0 12px;padding:8px 10px;background:#FAFAFA;border-radius:6px;border-left:3px solid #ddd}
+.narr-blue{border-left-color:#416BA9;background:#EEF3FA}
+.method{background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-top:20px}
+.method h3{font-size:14px;font-weight:700;color:#416BA9;margin:0 0 10px}
+.method p{font-size:12px;color:#555;line-height:1.7;margin:0 0 10px}.method p:last-child{margin:0}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.method-card{background:#FAFAFA;border-radius:8px;padding:14px 16px;border-top:3px solid #416BA9}
+.method-card h4{font-size:12px;font-weight:700;color:#416BA9;margin:0 0 6px}
+.method-card p{font-size:11px;color:#666;line-height:1.6;margin:0}
 </style>
 </head>
 <body>
@@ -85,27 +98,41 @@ footer{text-align:center;margin-top:16px;font-size:10px;color:#ccc;line-height:1
 
 <div class="hdr">
   <div><h1>Pay Now vs Take Loan &amp; Invest</h1><div class="hdr-sub" id="hdr-sub"></div></div>
-  <div class="hdr-right"><div class="hdr-rlbl">Blended portfolio return</div><div class="hdr-rval" id="hdr-ret"></div></div>
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="hdr-right"><div class="hdr-rlbl">Blended portfolio return</div><div class="hdr-rval" id="hdr-ret"></div><div style="color:rgba(255,255,255,.55);font-size:11px;margin-top:2px" id="hdr-ret-sub"></div></div>
+    <button id="share-btn" onclick="copyShareLink()" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:6px;padding:8px 16px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;white-space:nowrap;transition:all .15s" onmouseover="this.style.background='rgba(255,255,255,.3)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">Share scenario</button>
+  </div>
+</div>
+
+<div class="intro">
+  <h2>Should you pay tuition upfront or take the student loan?</h2>
+  <p>If you have the cash to pay university fees and living costs outright, you face a choice: <strong>spend it now</strong> and avoid the loan entirely, or <strong>take the maximum student loan</strong> and invest the money instead. This model compares both strategies over the 40-year life of a Plan 5 student loan.</p>
+  <p>The answer depends on three things: <strong>how much the graduate earns</strong> (which determines loan repayments), <strong>how the invested money grows</strong> (which depends on asset allocation and market returns), and crucially, <strong>whether the loan is ever fully repaid</strong>. Under Plan 5, any outstanding balance is written off after 40 years — so lower and moderate earners effectively receive a subsidy, making the loan cheaper than paying upfront regardless of investment returns.</p>
+  <p>Adjust the sliders to model different scenarios. The Monte Carlo simulation runs hundreds of paths with randomised annual returns to show the range of outcomes, not just the average.</p>
 </div>
 
 <div class="main">
 <div class="ctrl">
 
   <div class="sec">Course costs</div>
+  <div class="narr">The total amount that would need to be paid upfront — or borrowed and invested. Tuition is currently capped at £9,250/yr. Maintenance covers rent, food, and living expenses.</div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Annual tuition</span><span class="sval" id="v-fee"></span></div><input type="range" id="s-fee" min="5000" max="15000" step="250" value="9250"></div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Annual maintenance</span><span class="sval" id="v-maint"></span></div><input type="range" id="s-maint" min="5000" max="20000" step="500" value="13000"><div class="sub">Rent + living costs</div></div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Course length</span><span class="sval" id="v-dur"></span></div><input type="range" id="s-dur" min="3" max="6" step="1" value="3"></div>
 
   <div class="sec">Graduate salary</div>
+  <div class="narr">Salary drives loan repayments: 9% of everything earned above the threshold. Higher earners repay faster and may repay in full; lower earners benefit from the 40-year write-off. This is the single most important variable in the model.</div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Starting salary</span><span class="sval" id="v-sal"></span></div><input type="range" id="s-sal" min="20000" max="100000" step="1000" value="35000"></div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Real salary growth</span><span class="sval" id="v-salg"></span></div><input type="range" id="s-salg" min="0" max="6" step="0.5" value="2"><div class="sub">Above CPI p.a.</div></div>
 
   <div class="sec">Plan 5 loan</div>
+  <div class="narr narr-blue">Plan 5 (2023+ starters): repay 9% of income above the threshold. Interest is RPI + 0% — roughly CPI + 1%, so the loan balance grows slightly faster than general inflation. The threshold is frozen until 2027, then likely indexed to CPI. Any balance remaining after 40 years is written off — this write-off is the key mechanism that makes taking the loan attractive for moderate earners.</div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Repayment threshold</span><span class="sval" id="v-thresh"></span></div><input type="range" id="s-thresh" min="20000" max="35000" step="500" value="25000"></div>
   <div class="sr"><div class="sr-hd"><span class="slbl">Loan interest (RPI nom.)</span><span class="sval" id="v-lint"></span></div><input type="range" id="s-lint" min="0" max="8" step="0.25" value="3.5"><div class="sub">Plan 5: RPI + 0%. RPI typically CPI + ~1%</div></div>
   <div class="sr"><div class="sr-hd"><span class="slbl">CPI inflation</span><span class="sval" id="v-inf"></span></div><input type="range" id="s-inf" min="0" max="8" step="0.5" value="2.5"></div>
 
   <div class="sec">Portfolio allocation</div>
+  <div class="narr">How the invested lump sum is allocated. Higher equity allocations have historically delivered stronger long-term returns but with greater volatility — the Monte Carlo fan chart will be wider. A 40-year horizon is long enough to tolerate significant equity exposure, but the right mix depends on risk appetite and whether this pot might be needed sooner.</div>
   <div style="font-size:11px;color:#888;margin-bottom:8px">Drag handles to set equity / bond / cash mix</div>
   <div class="abar" id="abar">
     <div class="abar-inner">
@@ -148,25 +175,13 @@ footer{text-align:center;margin-top:16px;font-size:10px;color:#ccc;line-height:1
   <div class="kpi-row" id="kpis"></div>
   <div class="tabs">
     <button class="tbtn active" id="tab-w" onclick="switchTab('w')">Wealth over time</button>
-    <button class="tbtn" id="tab-mc" onclick="switchTab('mc')">Monte Carlo fan</button>
-    <button class="tbtn" id="tab-sal" onclick="switchTab('sal')">Salary breakeven</button>
     <button class="tbtn" id="tab-cf" onclick="switchTab('cf')">Year-by-year</button>
   </div>
   <div class="pnl" id="pnl-w">
     <div class="leg" id="leg-w"></div>
     <div class="cwrap"><canvas id="ch-w"></canvas></div>
-    <div class="note" id="note-w"></div>
-  </div>
-  <div class="pnl" id="pnl-mc" style="display:none">
-    <div class="leg" id="leg-mc"></div>
-    <div class="cwrap"><canvas id="ch-mc"></canvas></div>
     <div class="mc-stats" id="mc-stats"></div>
-    <div class="note" id="note-mc"></div>
-  </div>
-  <div class="pnl" id="pnl-sal" style="display:none">
-    <div class="leg" id="leg-sal"></div>
-    <div class="cwrap"><canvas id="ch-sal"></canvas></div>
-    <div class="note" id="note-sal"></div>
+    <div class="note" id="note-w"></div>
   </div>
   <div class="pnl" id="pnl-cf" style="display:none">
     <div style="overflow-x:auto"><table id="cf-tbl"></table></div>
@@ -175,7 +190,31 @@ footer{text-align:center;margin-top:16px;font-size:10px;color:#ccc;line-height:1
 </div>
 </div>
 
-<footer>Plan 5 loan: 9% above threshold, RPI + 0% interest, 40-year term. Monte Carlo uses normally distributed annual returns. No charges, CGT, or wrapper structure modelled. For illustration only.</footer>
+<div class="method">
+  <h3>How to read this model</h3>
+  <p>This model compares two strategies for funding university. <strong>"Pay now"</strong> spends the full cost upfront — fees plus living expenses — leaving nothing invested. Net wealth is permanently £0. <strong>"Take loan + invest"</strong> borrows everything via the student loan and invests the equivalent cash in a portfolio. The graduate then repays the loan from salary over up to 40 years while the investment pot compounds.</p>
+  <p>The chart shows <strong>net wealth</strong> for the invest strategy: the investment pot minus cumulative loan repayments to date. Whenever the line is above £0, the invest strategy is ahead of pay now. The shaded bands show the Monte Carlo distribution — the range of outcomes from hundreds of simulated paths with randomised annual returns, capturing the uncertainty that real markets bring.</p>
+  <div class="method-grid">
+    <div class="method-card">
+      <h4>The write-off effect</h4>
+      <p>Under Plan 5, any outstanding loan balance is written off after 40 years. For graduates who don't earn enough to repay in full, this means the total amount repaid is less than the original loan — the government absorbs the difference. This write-off acts as a subsidy that makes the loan strictly cheaper than paying upfront, even before considering any investment returns. Check the "Loan Outcome" KPI to see whether the loan is repaid or written off at your assumed salary.</p>
+    </div>
+    <div class="method-card">
+      <h4>The compounding effect</h4>
+      <p>The invested lump sum compounds for the full 40 years. Even after subtracting all loan repayments, the remaining pot can grow substantially — especially with equity-heavy allocations over long horizons. The "P(Invest Wins)" KPI shows the probability that the investment pot exceeds total loan repayments at year 40 across all Monte Carlo simulations.</p>
+    </div>
+    <div class="method-card">
+      <h4>Why salary matters most</h4>
+      <p>Loan repayments are 9% of income above the threshold. A graduate earning £30k repays very little; a graduate earning £80k repays aggressively. Higher earners repay the full loan plus RPI interest — potentially more than the original cost. But even then, the invested pot has had decades to compound, so investing often still wins. Move the salary slider to see how dramatically this changes the outcome.</p>
+    </div>
+    <div class="method-card">
+      <h4>What the model doesn't capture</h4>
+      <p>This is a simplified illustration. It doesn't model: tax on investment returns (use an ISA to shelter the pot), platform charges or fund fees, the risk that the invested money gets spent before the 40 years are up, potential future changes to loan terms by government, or the psychological burden of carrying a large loan balance. The Monte Carlo assumes normally distributed returns — real markets have fatter tails.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Plan 5 loan: 9% above threshold, RPI + 0% interest, 40-year term, written off after 40 years. Monte Carlo uses normally distributed annual returns. No charges, CGT, or wrapper structure modelled. For illustration only.</footer>
 </div>
 
 <script>
@@ -279,7 +318,7 @@ function mcRun(lump, mu, vol, yrs, nsim) {
 }
 
 // Charts
-var chW = null, chMc = null, chSal = null;
+var chW = null;
 
 function initCharts() {
   var axOpts = {
@@ -290,24 +329,7 @@ function initCharts() {
   chW = new Chart(G('ch-w').getContext('2d'), {
     type: 'line',
     data: {labels: [], datasets: []},
-    options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {mode: 'index', callbacks: {label: function(c) { return c.dataset.label + ': ' + pound(c.raw); }}}}, scales: JSON.parse(JSON.stringify(axOpts))}
-  });
-
-  chMc = new Chart(G('ch-mc').getContext('2d'), {
-    type: 'line',
-    data: {labels: [], datasets: []},
     options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {mode: 'index', filter: function(i) { return !i.dataset.label.startsWith('_'); }, callbacks: {label: function(c) { return c.dataset.label.startsWith('_') ? null : c.dataset.label + ': ' + pound(c.raw); }}}}, scales: JSON.parse(JSON.stringify(axOpts))}
-  });
-
-  chSal = new Chart(G('ch-sal').getContext('2d'), {
-    type: 'line',
-    data: {labels: [], datasets: []},
-    options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: false}, tooltip: {callbacks: {label: function(c) { return c.dataset.label + ': ' + pound(c.raw); }}}},
-      scales: {
-        x: {title: {display: true, text: 'Starting salary', font: {size: 11}}, grid: {display: false}, ticks: {font: {size: 10}}},
-        y: {grid: {color: '#f0f0f0'}, ticks: {callback: function(v) { return poundK(v); }, font: {size: 11}}}
-      }
-    }
   });
 }
 
@@ -343,6 +365,7 @@ function onDrag(e) {
   P.bd = Math.max(0, p2 - p1);
   updateBar();
   update();
+  saveToURL();
 }
 
 function updateBar() {
@@ -374,6 +397,7 @@ function resetAssumptions() {
   G('s-caR').value = P.caR; G('s-caV').value = P.caV;
   G('s-rho').value = P.rho;
   update();
+  saveToURL();
 }
 
 function update() {
@@ -390,7 +414,8 @@ function update() {
 
   // Header
   G('hdr-sub').textContent = pound(total) + ' total cost · ' + P.eq + '/' + P.bd + '/' + ca + ' equity/bonds/cash · ' + pf(vol) + ' σ';
-  G('hdr-ret').textContent = pf(mu) + ' nom · ' + pf(realRet) + ' real';
+  G('hdr-ret').textContent = pf(mu) + ' nominal';
+  G('hdr-ret-sub').textContent = pf(realRet) + ' real · ' + pf(vol) + ' volatility';
 
   // Run models
   var loan = simLoan(total, sal, salg, thresh, lint, inf, LY);
@@ -405,6 +430,12 @@ function update() {
   // Net wealth paths
   var wealthB_det = dp.map(function(v, y) { return v - loanCum[y]; });
 
+  // MC net wealth percentiles
+  var mcNet = {};
+  ['p10','p25','p50','p75','p90'].forEach(function(k) {
+    mcNet[k] = mc.pc[k].map(function(v, y) { return v - loanCum[y]; });
+  });
+
   // Strategy cards
   G('cards').innerHTML =
     '<div class="sc" style="border-left-color:#416BA9"><div class="sc-name" style="color:#416BA9">Pay now</div>' +
@@ -414,58 +445,40 @@ function update() {
     '<div class="sc" style="border-left-color:#9FCFCA"><div class="sc-name" style="color:#2a8a84">Take loan + invest</div>' +
     '<div class="sc-line"><span>Amount invested</span><span class="sc-val">' + pound(total) + '</span></div>' +
     '<div class="sc-line"><span>Loan repaid (nominal)</span><span class="sc-val">' + pound(loan.totalPaid) + (loan.paidOff ? '' : ' (written off)') + '</span></div>' +
-    '<div class="sc-line"><span>Det. pot yr ' + LY + '</span><span class="sc-val">' + pound(dp[LY]) + '</span></div>' +
-    '<div class="sc-line"><span>Det. net wealth</span><span class="sc-val" style="color:' + (dp[LY] - loan.totalPaid > 0 ? '#1a7a35' : '#c44') + '">' + pound(dp[LY] - loan.totalPaid) + '</span></div></div>';
+    '<div class="sc-line"><span>Expected pot yr ' + LY + '</span><span class="sc-val">' + pound(dp[LY]) + '</span></div>' +
+    '<div class="sc-line"><span>Expected net wealth</span><span class="sc-val" style="color:' + (dp[LY] - loan.totalPaid > 0 ? '#1a7a35' : '#c44') + '">' + pound(dp[LY] - loan.totalPaid) + '</span></div></div>';
 
   // KPIs
   var pWin = mc.all.filter(function(p) { return p[LY] > loan.totalPaid; }).length / nsim;
+  var loanStatus = loan.paidOff ? 'Repaid yr ' + loan.paidYear : pound(loan.finalDebt) + ' written off';
+  var loanStatusCol = loan.paidOff ? '#222' : '#1a7a35';
   G('kpis').innerHTML =
-    '<div class="kpi"><div class="kpi-l">Blended Return</div><div class="kpi-v">' + pf(mu) + '</div><div class="kpi-s">' + pf(realRet) + ' real</div></div>' +
-    '<div class="kpi"><div class="kpi-l">Portfolio Vol</div><div class="kpi-v">' + pf(vol) + '</div><div class="kpi-s">annual σ</div></div>' +
+    '<div class="kpi"><div class="kpi-l">Blended Return</div><div class="kpi-v">' + pf(mu) + '</div><div class="kpi-s">' + pf(realRet) + ' real · ' + pf(vol) + ' σ</div></div>' +
     '<div class="kpi"><div class="kpi-l">Real Loan Rate</div><div class="kpi-v">' + pf(realLint) + '</div><div class="kpi-s">RPI ' + pf(lint) + ' − CPI ' + pf(inf) + '</div></div>' +
+    '<div class="kpi"><div class="kpi-l">Loan Outcome</div><div class="kpi-v" style="font-size:15px;color:' + loanStatusCol + '">' + loanStatus + '</div><div class="kpi-s">over ' + LY + ' yr term</div></div>' +
     '<div class="kpi" style="border-top-color:' + (pWin > 0.6 ? '#1a7a35' : '#c44') + '"><div class="kpi-l">P(Invest Wins)</div><div class="kpi-v" style="color:' + (pWin > 0.6 ? '#1a7a35' : '#c44') + '">' + (pWin * 100).toFixed(0) + '%</div><div class="kpi-s">pot > loan cost at yr ' + LY + '</div></div>';
 
-  // ── Tab 1: Wealth over time ──
+  // ── Combined wealth + MC fan chart ──
   G('leg-w').innerHTML =
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Invest: net wealth (det.)</span>' +
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #9FCFCA"></span>Investment pot</span>' +
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px solid #B14FC5"></span>Cum. loan repaid</span>' +
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:1.5px dashed rgba(65,107,169,0.3)"></span>Pay now (£0)</span>';
-
-  chW.data.labels = labels;
-  chW.data.datasets = [
-    {label: 'Investment pot', data: dp, borderColor: '#9FCFCA', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, tension: 0.3, fill: false},
-    {label: 'Cum. loan repaid', data: loanCum, borderColor: '#B14FC5', pointRadius: 0, borderWidth: 2, tension: 0.1, fill: false},
-    {label: 'Invest: net wealth', data: wealthB_det, borderColor: '#416BA9', pointRadius: 0, borderWidth: 2.5, tension: 0.3, fill: false},
-    {label: 'Pay now: net wealth', data: labels.map(function() { return 0; }), borderColor: 'rgba(65,107,169,0.25)', borderDash: [4,4], pointRadius: 0, borderWidth: 1.5, tension: 0, fill: false}
-  ];
-  chW.update('none');
-
-  G('note-w').textContent = 'Net wealth = investment pot minus cumulative loan repayments. "Pay now" always sits at £0 — the money is spent. ' +
-    (loan.paidOff ? 'Loan fully repaid by year ' + loan.paidYear + ' — after that the pot grows unencumbered.' : 'Loan written off at year 40 with ' + pound(loan.finalDebt) + ' forgiven — the graduate never repays the full balance.');
-
-  // ── Tab 2: MC fan ──
-  var mcNet = {};
-  ['p10','p25','p50','p75','p90'].forEach(function(k) {
-    mcNet[k] = mc.pc[k].map(function(v, y) { return v - loanCum[y]; });
-  });
-
-  G('leg-mc').innerHTML =
     '<span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.12)"></span>P10–P90 range</span>' +
     '<span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.30)"></span>P25–P75 range</span>' +
     '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Median net wealth</span>' +
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #9FCFCA"></span>Det. net wealth</span>';
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #9FCFCA"></span>Expected (constant return)</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px solid #B14FC5"></span>Cum. loan repaid</span>' +
+    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:1.5px dashed rgba(65,107,169,0.25)"></span>Pay now (£0)</span>';
 
-  chMc.data.labels = labels;
-  chMc.data.datasets = [
-    {label: '_p90', data: mcNet.p90, fill: '+1', backgroundColor: 'rgba(65,107,169,0.10)', borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
+  chW.data.labels = labels;
+  chW.data.datasets = [
+    {label: '_p90', data: mcNet.p90, fill: '+1', backgroundColor: 'rgba(65,107,169,0.08)', borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
     {label: '_p10', data: mcNet.p10, fill: false, borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
-    {label: '_p75', data: mcNet.p75, fill: '+1', backgroundColor: 'rgba(65,107,169,0.18)', borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
+    {label: '_p75', data: mcNet.p75, fill: '+1', backgroundColor: 'rgba(65,107,169,0.16)', borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
     {label: '_p25', data: mcNet.p25, fill: false, borderColor: 'transparent', pointRadius: 0, borderWidth: 0, tension: 0.3},
     {label: 'Median net wealth', data: mcNet.p50, fill: false, borderColor: '#416BA9', pointRadius: 0, borderWidth: 2.5, tension: 0.3},
-    {label: 'Det. net wealth', data: wealthB_det, fill: false, borderColor: '#9FCFCA', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, tension: 0.3}
+    {label: 'Expected (constant return)', data: wealthB_det, fill: false, borderColor: '#9FCFCA', borderDash: [5,3], pointRadius: 0, borderWidth: 1.5, tension: 0.3},
+    {label: 'Cum. loan repaid', data: loanCum, borderColor: '#B14FC5', pointRadius: 0, borderWidth: 2, tension: 0.1, fill: false},
+    {label: 'Pay now', data: labels.map(function() { return 0; }), borderColor: 'rgba(65,107,169,0.25)', borderDash: [4,4], pointRadius: 0, borderWidth: 1.5, tension: 0, fill: false}
   ];
-  chMc.update('none');
+  chW.update('none');
 
   G('mc-stats').innerHTML =
     '<span>Median net yr ' + LY + ': <strong>' + pound(mcNet.p50[LY]) + '</strong></span>' +
@@ -473,37 +486,14 @@ function update() {
     '<span>P10: <strong>' + pound(mcNet.p10[LY]) + '</strong></span>' +
     '<span>P(invest wins): <strong>' + (pWin * 100).toFixed(0) + '%</strong></span>';
 
-  G('note-mc').textContent = 'Net wealth = pot minus cumulative repayments. "Pay now" always ends at £0 — any positive net wealth here means investing won. ' +
-    (loan.paidOff ? '' : 'The loan write-off means ' + pound(loan.finalDebt) + ' of debt is forgiven — the invest strategy benefits from both the write-off and the compounded pot.');
+  G('note-w').textContent = 'The solid blue line shows median net wealth (investment pot minus cumulative loan repayments) across ' + nsim + ' Monte Carlo simulations. The shaded bands show the P10–P90 and P25–P75 ranges — wider bands mean more uncertainty. The dashed teal line is the expected path assuming constant returns each year. The purple line shows how much has been repaid on the loan cumulatively. Anything above £0 means investing is ahead of paying upfront. ' +
+    (loan.paidOff ? 'At these assumptions, the loan is fully repaid by year ' + loan.paidYear + ' — after that point, the pot grows with no further loan cost.' : 'At these assumptions, the loan is never fully repaid — ' + pound(loan.finalDebt) + ' is written off at year 40. This write-off is a direct subsidy that makes the invest strategy cheaper than paying upfront even before considering investment growth.');
 
-  // ── Tab 3: Salary breakeven ──
-  var salRange = [];
-  for (var s = 20000; s <= 100000; s += 2000) salRange.push(s);
-  var repaidBySal = salRange.map(function(s) { return simLoan(total, s, salg, thresh, lint, inf, LY).totalPaid; });
-
-  G('leg-sal').innerHTML =
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Total loan repaid</span>' +
-    '<span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.10)"></span>Amount borrowed</span>';
-
-  chSal.data.labels = salRange.map(function(s) { return '£' + (s/1000) + 'k'; });
-  chSal.data.datasets = [
-    {label: 'Amount borrowed', data: salRange.map(function() { return total; }), borderColor: 'rgba(65,107,169,0.3)', backgroundColor: 'rgba(65,107,169,0.05)', fill: true, pointRadius: 0, borderWidth: 1.5, borderDash: [4,3], tension: 0},
-    {label: 'Total loan repaid', data: repaidBySal, borderColor: '#416BA9', pointRadius: 0, borderWidth: 2.5, tension: 0.3, fill: false}
-  ];
-  chSal.update('none');
-
-  var beIdx = -1;
-  for (var i = 0; i < repaidBySal.length; i++) { if (repaidBySal[i] >= total) { beIdx = i; break; } }
-  var beSal = beIdx >= 0 ? salRange[beIdx] : null;
-  G('note-sal').textContent = beSal ?
-    'Breakeven starting salary: ~' + pound(beSal) + '. Below this, the loan is partially written off — the graduate never repays the full balance, so the loan is strictly cheaper than paying upfront even before investment returns. Above it, RPI interest means total repayments exceed the original sum.' :
-    'At all salaries in this range, the loan is never fully repaid — the write-off makes the loan strictly cheaper than paying outright regardless.';
-
-  // ── Tab 4: Year-by-year ──
+  // ── Year-by-year table ──
   var milestones = [0,1,3,5,10,15,20,25,30,35,40];
   var msFiltered = milestones.filter(function(y) { return y <= LY; });
   var thtml = '<thead><tr style="border-bottom:2px solid #416BA9">';
-  ['Year','Pot (det.)','Pot (median)','Pot (P25)','Loan balance','Cum. repaid','Net wealth (median)'].forEach(function(h) {
+  ['Year','Pot (expected)','Pot (median)','Pot (P25)','Loan balance','Cum. repaid','Net wealth (median)'].forEach(function(h) {
     thtml += '<th style="padding:5px 8px;text-align:right">' + h + '</th>';
   });
   thtml += '</tr></thead><tbody>';
@@ -522,7 +512,7 @@ function update() {
   });
   thtml += '</tbody>';
   G('cf-tbl').innerHTML = thtml;
-  G('note-cf').textContent = 'Net wealth = median pot minus cumulative repayments. Positive means the invest strategy is ahead of pay now.';
+  G('note-cf').textContent = 'Expected pot assumes the blended portfolio return is earned every year with no volatility. Median pot is the 50th percentile from the Monte Carlo simulation — half of simulated paths end above this, half below. P25 is a downside scenario (only 25% of paths do worse). Net wealth = median pot minus cumulative repayments; positive values (green) mean the invest strategy is ahead of pay now at that point in time.';
 
   // Slider labels
   G('v-fee').textContent = pound(P.fee); G('v-maint').textContent = pound(P.maint); G('v-dur').textContent = P.dur + ' yrs';
@@ -537,13 +527,11 @@ function update() {
 }
 
 function switchTab(t) {
-  ['w','mc','sal','cf'].forEach(function(k) {
+  ['w','cf'].forEach(function(k) {
     G('pnl-' + k).style.display = (k === t) ? 'block' : 'none';
     G('tab-' + k).classList.toggle('active', k === t);
   });
   if (t === 'w') chW.resize();
-  if (t === 'mc') chMc.resize();
-  if (t === 'sal') chSal.resize();
 }
 
 // Bind sliders
@@ -554,14 +542,62 @@ var sliders = [
   ['s-caR','caR'],['s-caV','caV'],['s-rho','rho']
 ];
 sliders.forEach(function(pair) {
-  G(pair[0]).addEventListener('input', function() { P[pair[1]] = +this.value; update(); });
+  G(pair[0]).addEventListener('input', function() { P[pair[1]] = +this.value; update(); saveToURL(); });
 });
 
+// URL parameter save/load
+function paramsToURL() {
+  var parts = [];
+  var allKeys = ['fee','maint','dur','sal','salg','thresh','lint','inf','eq','bd','nsim','eqR','eqV','bdR','bdV','caR','caV','rho'];
+  allKeys.forEach(function(k) { parts.push(k + '=' + P[k]); });
+  return window.location.pathname + '?' + parts.join('&');
+}
+
+function loadFromURL() {
+  var search = window.location.search;
+  if (!search || search.length < 2) return false;
+  var pairs = search.substring(1).split('&');
+  var loaded = false;
+  pairs.forEach(function(pair) {
+    var kv = pair.split('=');
+    if (kv.length === 2 && P.hasOwnProperty(kv[0])) {
+      P[kv[0]] = parseFloat(kv[1]);
+      loaded = true;
+    }
+  });
+  if (loaded) {
+    // Sync slider values
+    var sliderMap = {fee:'s-fee',maint:'s-maint',dur:'s-dur',sal:'s-sal',salg:'s-salg',thresh:'s-thresh',lint:'s-lint',inf:'s-inf',nsim:'s-nsim',eqR:'s-eqR',eqV:'s-eqV',bdR:'s-bdR',bdV:'s-bdV',caR:'s-caR',caV:'s-caV',rho:'s-rho'};
+    for (var k in sliderMap) { if (G(sliderMap[k])) G(sliderMap[k]).value = P[k]; }
+    p1 = P.eq;
+    p2 = P.eq + P.bd;
+  }
+  return loaded;
+}
+
+function saveToURL() {
+  var url = paramsToURL();
+  window.history.replaceState(null, '', url);
+}
+
+function copyShareLink() {
+  var url = window.location.origin + paramsToURL();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(function() {
+      var btn = G('share-btn');
+      btn.textContent = '✓ Copied!';
+      setTimeout(function() { btn.textContent = 'Share scenario'; }, 1500);
+    });
+  }
+}
+
 // Init
+loadFromURL();
 initCharts();
 setupBar();
 updateBar();
 update();
+saveToURL();
 </script>
 </body>
 </html>
