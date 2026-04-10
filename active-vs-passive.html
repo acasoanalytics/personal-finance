@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Active vs Passive: The True Cost of Fund Fees</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#F5F5F5;color:#222;font-size:13px;line-height:1.6;}
+#app{max-width:1160px;margin:0 auto;padding:20px;}
+
+/* Header */
+.hdr{background:#416BA9;border-radius:10px;padding:24px 28px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.hdr h1{color:#fff;font-size:24px;font-weight:700;letter-spacing:-.4px;margin-bottom:4px;}
+.hdr-sub{color:rgba(255,255,255,.7);font-size:13px;line-height:1.5;}
+.share-btn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:8px 16px;font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;white-space:nowrap;transition:all .15s;}
+.share-btn:hover{background:rgba(255,255,255,.25);}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#222;color:#fff;padding:10px 22px;border-radius:8px;font-size:12px;font-weight:700;font-family:inherit;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;}
+.toast.show{opacity:1;}
+
+/* Layout */
+.main{display:grid;grid-template-columns:300px 1fr;gap:20px;}
+.ctrl{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);align-self:start;}
+.sec{font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #416BA9;padding-bottom:6px;margin:16px 0 12px;}
+.sec:first-child{margin-top:0;}
+
+/* Sliders — larger touch targets on all devices */
+.sr{margin-bottom:14px;}
+.sr-hd{display:flex;justify-content:space-between;margin-bottom:3px;}
+.slbl{font-size:12px;font-weight:700;color:#444;}
+.sval{font-size:13px;font-weight:700;color:#416BA9;}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;background:#ddd;border-radius:3px;outline:none;cursor:pointer;margin:4px 0;touch-action:manipulation;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;background:#416BA9;border-radius:50%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.22);}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;background:#416BA9;border-radius:50%;border:none;cursor:pointer;}
+.sub{font-size:10px;color:#aaa;margin-top:2px;}
+
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.kpi{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid #416BA9;}
+.kpi-l{font-size:10px;color:#999;font-weight:700;text-transform:uppercase;margin-bottom:3px;}
+.kpi-v{font-size:19px;font-weight:700;color:#222;}
+.kpi-s{font-size:10px;color:#aaa;margin-top:1px;}
+
+/* Tabs */
+.tabs{margin-bottom:0;display:flex;flex-wrap:wrap;gap:3px;}
+.tbtn{background:#e0e0e0;color:#555;border:none;padding:8px 22px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;border-radius:6px 6px 0 0;transition:all .15s;}
+.tbtn.active{background:#416BA9;color:#fff;}
+.pnl{background:#fff;border-radius:0 10px 10px 10px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);display:none;}
+.pnl.active{display:block;}
+
+/* Charts */
+.cwrap{height:360px;position:relative;margin-bottom:8px;}
+.ch-ttl{font-size:15px;font-weight:700;color:#222;margin:0 0 4px;}
+.ch-sub{font-size:11px;color:#888;margin-bottom:14px;}
+
+/* Summary box */
+.sum-box{background:#EEF3FA;border-radius:8px;padding:16px;margin-top:12px;}
+.sum-ttl{font-size:11px;font-weight:700;color:#416BA9;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.sum-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.sum-item .lbl{font-size:10px;color:#888;font-weight:700;text-transform:uppercase;}
+.sum-item .val{font-size:16px;font-weight:700;color:#222;margin-top:2px;}
+.sum-item .val.bad{color:#C44;}
+.sum-item .val.good{color:#1a7a35;}
+
+/* ── Mobile / responsive ── */
+@media(max-width:820px){
+  #app{padding:12px;}
+  .main{grid-template-columns:1fr;gap:16px;}
+  .hdr{padding:18px 16px 14px;border-radius:8px;}
+  .hdr h1{font-size:19px;}
+  .hdr-sub{font-size:12px;}
+  .ctrl{padding:16px;}
+  .kpi-row{grid-template-columns:1fr 1fr;gap:8px;}
+  .kpi-v{font-size:16px;}
+  .pnl{padding:16px;border-radius:0 8px 8px 8px;}
+  .cwrap{height:260px;}
+  .sum-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .sum-item .val{font-size:14px;}
+  .tbtn{padding:8px 14px;font-size:11px;}
+  .narr-card{padding:16px;}
+  .narr-card .stat{font-size:24px;}
+  .wf-label{width:100px;font-size:10px;}
+  table{font-size:10px;}
+  th,td{padding:4px 5px;}
+}
+@media(max-width:480px){
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .kpi{padding:10px;}
+  .kpi-v{font-size:15px;}
+  .kpi-s{font-size:9px;}
+  .sum-grid{grid-template-columns:1fr;}
+  .cwrap{height:220px;}
+  .tbtn{padding:7px 10px;font-size:10px;flex:1;text-align:center;}
+  .narr-card p,.narr-card li{font-size:12px;}
+}
+
+/* Table */
+table{width:100%;border-collapse:collapse;font-size:11px;min-width:580px;}
+th{padding:6px 8px;text-align:right;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;border-bottom:2px solid #416BA9;}
+td{padding:5px 8px;text-align:right;border-bottom:1px solid #f0f0f0;}
+.fw7{font-weight:700;}
+tr.hl{background:#f8fafd;}
+
+/* Narrative */
+.narr{margin-top:20px;}
+.narr-card{background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;border-left:4px solid #416BA9;}
+.narr-card.accent-t{border-left-color:#9FCFCA;}
+.narr-card.accent-p{border-left-color:#B14FC5;}
+.narr-card.accent-k{border-left-color:#FEB0C0;}
+.narr-card h3{font-size:15px;font-weight:700;color:#222;margin-bottom:8px;}
+.narr-card p{font-size:12.5px;color:#444;line-height:1.7;margin-bottom:8px;}
+.narr-card p:last-child{margin-bottom:0;}
+.narr-card .stat{font-size:28px;font-weight:700;color:#416BA9;margin:8px 0;}
+.narr-card .stat-sub{font-size:11px;color:#888;margin-top:-4px;margin-bottom:8px;}
+.narr-card ul{margin:6px 0 8px 18px;font-size:12px;color:#444;line-height:1.8;}
+.narr-card .src{font-size:10px;color:#bbb;font-style:italic;margin-top:6px;}
+.narr-card blockquote{border-left:3px solid #ddd;padding-left:12px;margin:10px 0;font-style:italic;color:#666;font-size:12px;}
+
+/* Waterfall */
+.wf-bar{display:flex;align-items:center;margin-bottom:6px;}
+.wf-label{width:140px;font-size:11px;font-weight:700;color:#555;text-align:right;padding-right:10px;}
+.wf-track{flex:1;height:28px;position:relative;background:#f5f5f5;border-radius:4px;overflow:hidden;}
+.wf-fill{position:absolute;top:0;height:100%;border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:10px;font-weight:700;color:#fff;transition:width .3s;}
+.wf-val{font-size:11px;font-weight:700;margin-left:8px;min-width:70px;}
+
+footer{text-align:center;margin-top:20px;font-size:10px;color:#ccc;line-height:1.6;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="hdr">
+  <div>
+    <h1>Active vs Passive: The True Cost of Fund Fees</h1>
+    <div class="hdr-sub">How much of your investment growth do active fund managers actually keep? And do they earn it?</div>
+  </div>
+  <button class="share-btn" onclick="storeScenario()" title="Copy a shareable link with your current settings">&#128279; Copy Scenario</button>
+</div>
+
+<div class="main">
+<div class="ctrl">
+  <div class="sec">Investment</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Initial Investment</span><span class="sval" id="v-init"></span></div>
+    <input type="range" id="s-init" min="5000" max="500000" step="5000" value="100000">
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Monthly Contribution</span><span class="sval" id="v-contrib"></span></div>
+    <input type="range" id="s-contrib" min="0" max="5000" step="50" value="500">
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Time Horizon</span><span class="sval" id="v-years"></span></div>
+    <input type="range" id="s-years" min="5" max="40" step="1" value="25">
+  </div>
+
+  <div class="sec">Market Return</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Gross Nominal Return</span><span class="sval" id="v-ret"></span></div>
+    <input type="range" id="s-ret" min="2" max="12" step="0.5" value="7">
+    <div class="sub">Before fees — what the market delivers</div>
+  </div>
+
+  <div class="sec">Fund Costs (OCF)</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Passive Fund OCF</span><span class="sval" id="v-pOcf"></span></div>
+    <input type="range" id="s-pOcf" min="0.03" max="0.50" step="0.01" value="0.23">
+    <div class="sub">e.g. Vanguard FTSE Global All Cap: 0.23%</div>
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Active Fund OCF</span><span class="sval" id="v-aOcf"></span></div>
+    <input type="range" id="s-aOcf" min="0.30" max="2.00" step="0.05" value="1.25">
+    <div class="sub">Typical UK active equity fund: 0.75–1.25%</div>
+  </div>
+
+  <div class="sec">Active Manager Skill</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Active Alpha (pre-fee)</span><span class="sval" id="v-alpha"></span></div>
+    <input type="range" id="s-alpha" min="-2" max="2" step="0.1" value="0">
+    <div class="sub">Excess return before fees. Median UK active equity manager: −0.5% to −1.0% (SPIVA). Set to 0 for a generous "average" assumption.</div>
+  </div>
+
+  <div class="sum-box" style="margin-top:16px">
+    <div class="sum-ttl">Net Returns After Fees</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><div class="lbl" style="font-size:10px;color:#888;font-weight:700">Passive Net</div><div style="font-size:16px;font-weight:700;color:#9FCFCA" id="v-pNet"></div></div>
+      <div><div class="lbl" style="font-size:10px;color:#888;font-weight:700">Active Net</div><div style="font-size:16px;font-weight:700;color:#B14FC5" id="v-aNet"></div></div>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:#888">
+      Fee drag: <strong id="v-drag"></strong> p.a. — compounding over <span id="v-yrs2"></span> years
+    </div>
+  </div>
+</div>
+
+<!-- Right panel -->
+<div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-l">Passive Final Value</div><div class="kpi-v" id="kpi-pv" style="color:#2a8a84"></div><div class="kpi-s" id="kpi-pv-s"></div></div>
+    <div class="kpi"><div class="kpi-l">Active Final Value</div><div class="kpi-v" id="kpi-av" style="color:#8a3aa0"></div><div class="kpi-s" id="kpi-av-s"></div></div>
+    <div class="kpi" id="kpi-cost-card"><div class="kpi-l">Cost of Active</div><div class="kpi-v" id="kpi-cost" style="color:#C44"></div><div class="kpi-s" id="kpi-cost-s"></div></div>
+    <div class="kpi"><div class="kpi-l">Fee Share of Gain</div><div class="kpi-v" id="kpi-share" style="color:#C44"></div><div class="kpi-s">% of growth taken by active fees vs passive</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tbtn active" onclick="switchTab('growth')">Growth Chart</button>
+    <button class="tbtn" onclick="switchTab('waterfall')">Fee Waterfall</button>
+    <button class="tbtn" onclick="switchTab('table')">Year-by-Year</button>
+  </div>
+
+  <div class="pnl active" id="pnl-growth">
+    <h3 class="ch-ttl">Portfolio Value Over Time</h3>
+    <div class="ch-sub" id="growth-sub"></div>
+    <div class="cwrap"><canvas id="c-growth"></canvas></div>
+    <div class="sum-box">
+      <div class="sum-ttl">Where Does Your Money End Up?</div>
+      <div class="sum-grid">
+        <div class="sum-item"><div class="lbl">Total Invested</div><div class="val" id="s-invested"></div></div>
+        <div class="sum-item"><div class="lbl">Passive Growth</div><div class="val good" id="s-pgrowth"></div></div>
+        <div class="sum-item"><div class="lbl">Active Growth</div><div class="val" id="s-agrowth" style="color:#8a3aa0"></div></div>
+      </div>
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid #d4e3f5">
+        <div class="sum-grid">
+          <div class="sum-item"><div class="lbl">Passive Fees Paid</div><div class="val" id="s-pfees" style="color:#888"></div></div>
+          <div class="sum-item"><div class="lbl">Active Fees Paid</div><div class="val bad" id="s-afees"></div></div>
+          <div class="sum-item"><div class="lbl">Extra Fee Cost</div><div class="val bad" id="s-extrafees"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pnl" id="pnl-waterfall">
+    <h3 class="ch-ttl">Fee Waterfall: Where Does the Growth Go?</h3>
+    <div class="ch-sub">Of every pound of gross market return, how much do you keep vs lose to fees?</div>
+    <div style="margin:20px 0 24px" id="wf-container"></div>
+    <div class="cwrap"><canvas id="c-pie"></canvas></div>
+  </div>
+
+  <div class="pnl" id="pnl-table">
+    <h3 class="ch-ttl">Year-by-Year Comparison</h3>
+    <div class="ch-sub">All values nominal</div>
+    <div style="max-height:500px;overflow:auto;-webkit-overflow-scrolling:touch">
+      <table>
+        <thead><tr><th style="text-align:left">Year</th><th>Invested</th><th>Passive Value</th><th>Active Value</th><th>Passive Fees (cum.)</th><th>Active Fees (cum.)</th><th>Gap</th></tr></thead>
+        <tbody id="t-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Narrative sections -->
+<div class="narr">
+  <div class="narr-card">
+    <h3>The Arithmetic of Active Management</h3>
+    <p>William Sharpe's 1991 insight is as elegant as it is devastating: before costs, the return of the average actively managed pound must equal the return of the average passively managed pound. Both, in aggregate, hold "the market." After costs, the average actively managed pound must therefore underperform the average passively managed pound — by precisely the amount of those costs.</p>
+    <p>This isn't an opinion or a statistical tendency. It's arithmetic. The only way an active manager can outperform is if another active manager underperforms by the same amount. It's a zero-sum game before fees and a negative-sum game after them. The fee differential between active and passive is the guaranteed headwind that active investors face every single year.</p>
+    <blockquote>"After costs, the return on the average actively managed dollar will be less than the return on the average passively managed dollar for any time period." — William F. Sharpe, <em>The Arithmetic of Active Management</em>, 1991</blockquote>
+  </div>
+
+  <div class="narr-card accent-t">
+    <h3>The SPIVA Scorecards: Two Decades of Evidence</h3>
+    <p>S&P Dow Jones Indices publishes the SPIVA (S&P Indices Versus Active) scorecards semi-annually, comparing actively managed funds against their benchmarks across every major market. The results are remarkably consistent across geographies and time periods:</p>
+    <div class="stat">92%</div>
+    <div class="stat-sub">of UK equity funds underperformed the S&P United Kingdom BMI over 15 years (SPIVA Europe Year-End 2023)</div>
+    <p>The pattern holds globally. Over 15-year periods ending 2023:</p>
+    <ul>
+      <li><strong>US Large Cap:</strong> ~93% of active funds underperformed the S&P 500</li>
+      <li><strong>Europe Equity:</strong> ~89% underperformed the S&P Europe 350</li>
+      <li><strong>Emerging Markets:</strong> ~90% underperformed the S&P/IFCI Composite</li>
+      <li><strong>Global Equity:</strong> ~88% underperformed the S&P Global 1200</li>
+    </ul>
+    <p>Crucially, SPIVA corrects for survivorship bias — funds that close or merge (usually due to poor performance) are still counted in the data. Without this correction, active management's track record looks even worse than these figures suggest.</p>
+    <div class="src">Source: SPIVA Scorecards, S&P Dow Jones Indices (spglobal.com/spdji/en/research-insights/spiva/)</div>
+  </div>
+
+  <div class="narr-card accent-p">
+    <h3>Persistence: Can You Just Pick the Good Ones?</h3>
+    <p>The natural rejoinder is: "Fine, the average fund underperforms, but I'll just pick the top managers." The data on persistence makes this strategy deeply unreliable.</p>
+    <p>The S&P Persistence Scorecard examines whether top-quartile funds remain top-quartile in subsequent periods. The results are sobering: of US equity funds in the top quartile over any given five-year period, only about 3–5% remain in the top quartile for the subsequent five years. This is roughly consistent with chance.</p>
+    <p>The FCA's 2014 study of UK funds reached a similar conclusion: past performance offered essentially no predictive value for future returns once you controlled for fees and risk factors. The small number of persistent outperformers was statistically indistinguishable from what you'd expect by luck alone.</p>
+    <p>Star managers do exist — but identifying them in advance is the problem. You're much more likely to be paying premium fees for a manager who was lucky than one who is genuinely skilled. And even genuinely skilled managers face capacity constraints: as assets under management grow, the opportunity set for generating alpha shrinks.</p>
+  </div>
+
+  <div class="narr-card">
+    <h3>The Compounding Tax: Why Small Fee Differences Create Huge Gaps</h3>
+    <p>A 0.70% annual fee difference might seem trivial. But fees compound against you just as returns compound for you. The fee is levied on the entire pot every year — including on all the growth that previous years generated. Over long horizons, this compounding creates a staggering drag.</p>
+    <p>Adjust the sliders above to see this in action. At typical parameters (£100k initial, £500/mo contributions, 7% gross return, 25-year horizon), the difference between 0.15% and 0.85% OCF typically costs <strong>tens of thousands of pounds</strong> — money that would otherwise be compounding in your pot.</p>
+    <p>Warren Buffett put a number on it in his 2016 letter to Berkshire Hathaway shareholders: over the prior 50 years, he estimated that investors paying "helpers" (active managers, hedge funds, fund-of-funds) had wasted over $100 billion in aggregate. His advice? A low-cost index fund.</p>
+  </div>
+
+  <div class="narr-card accent-k">
+    <h3>The Fee Share of Total Gain</h3>
+    <p>One of the most powerful ways to see the cost of active management is to express fees not as a percentage of assets (the OCF), but as a <strong>percentage of the total investment gain</strong>. An 0.85% OCF sounds small. But when gross returns are 7%, that 0.85% represents over 12% of your annual growth being handed to the fund manager — every year, whether they beat the market or not.</p>
+    <p>Over a multi-decade horizon, cumulative fees can consume 20–30% or more of the total growth your money would have generated. The waterfall tab above shows this decomposition for your specific parameters.</p>
+    <p>With a passive fund at 0.15%, you keep the vast majority of market returns. The difference in the "fee share of gain" between passive and active is the true measure of what active management costs you — expressed not in obscure basis points, but in pounds you'll never compound.</p>
+  </div>
+
+  <div class="narr-card accent-t">
+    <h3>What About "Cheap" Active Funds?</h3>
+    <p>Some active funds have reduced their OCFs to 0.40–0.60% in response to fee pressure from passive competitors. This is positive but doesn't change the fundamental arithmetic: the median active fund still underperforms after any level of fee. A lower-cost active fund simply loses by less.</p>
+    <p>Morningstar's research has consistently found that the single best predictor of future fund performance is the expense ratio — not star ratings, not past returns, not the fund manager's pedigree. Low fees don't guarantee outperformance, but high fees virtually guarantee underperformance over long horizons.</p>
+    <p>If you do choose to allocate a satellite portion to active management, fee-consciousness is the most evidence-based selection criterion available. But for the core of a portfolio, the case for passive is overwhelming.</p>
+  </div>
+</div>
+
+<footer>
+  For illustration only · Returns are nominal and constant · Fees modelled as a continuous annual charge on the pot balance · No platform fees, trading costs, or tax modelled<br>
+  SPIVA data: S&P Dow Jones Indices · Sharpe (1991), The Arithmetic of Active Management · FCA Asset Management Market Study (2017)
+</footer>
+</div>
+
+<script>
+const G=id=>document.getElementById(id);
+const FF="'Gotham','Segoe UI',sans-serif";
+const pound=v=>'£'+Math.round(Math.max(0,v)).toLocaleString('en-GB');
+const poundK=v=>{v=Math.max(0,v);return v>=1e6?'£'+(v/1e6).toFixed(2)+'m':v>=1e3?'£'+Math.round(v/1e3).toLocaleString('en-GB')+'k':'£'+Math.round(v);};
+const pf=v=>(+v).toFixed(2)+'%';
+const pf1=v=>(+v).toFixed(1)+'%';
+
+/* State */
+const P={init:100000,contrib:500,years:25,ret:7,pOcf:0.23,aOcf:1.25,alpha:0};
+
+/* Charts */
+let growthChart=null,pieChart=null;
+
+function initCharts(){
+  const ax={y:{min:0,grid:{color:'#f0f0f0'},ticks:{callback:v=>poundK(v),font:{family:FF,size:11}}},x:{grid:{display:false},ticks:{font:{family:FF,size:10},maxTicksLimit:15}}};
+  growthChart=new Chart(G('c-growth').getContext('2d'),{type:'line',data:{labels:[],datasets:[
+    {label:'Passive',data:[],borderColor:'#9FCFCA',backgroundColor:'rgba(159,207,202,0.08)',fill:true,tension:.3,pointRadius:0,borderWidth:2.5},
+    {label:'Active',data:[],borderColor:'#B14FC5',backgroundColor:'rgba(177,79,197,0.06)',fill:true,tension:.3,pointRadius:0,borderWidth:2.5},
+    {label:'No Fees (gross)',data:[],borderColor:'#BBBBBB',borderDash:[5,3],fill:false,tension:.3,pointRadius:0,borderWidth:1.5}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{family:FF,size:11},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+pound(c.raw)}}},scales:ax}});
+
+  pieChart=new Chart(G('c-pie').getContext('2d'),{type:'bar',data:{labels:['Passive Fund','Active Fund'],datasets:[
+    {label:'You Keep (Net Growth)',data:[0,0],backgroundColor:['#9FCFCA','#B14FC5']},
+    {label:'Fees Paid',data:[0,0],backgroundColor:['rgba(159,207,202,0.3)','rgba(177,79,197,0.3)']},
+  ]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{font:{family:FF,size:11}}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+pound(c.raw)}}},scales:{x:{stacked:true,ticks:{callback:v=>poundK(v),font:{family:FF,size:11}},grid:{color:'#f0f0f0'}},y:{stacked:true,grid:{display:false},ticks:{font:{family:FF,size:12,weight:'bold'}}}}}});
+}
+
+/* Projection engine */
+function project(init,monthlyContrib,years,grossRet,ocf){
+  const netRet=grossRet-ocf;
+  const path=[init];
+  let bal=init,cumFees=0,cumContrib=init;
+  const annualContrib=monthlyContrib*12;
+  const yearly=[];
+  for(let y=1;y<=years;y++){
+    // Growth, then add contributions, then deduct fees (simplified annual)
+    const startBal=bal;
+    bal=bal*(1+grossRet/100)+annualContrib;
+    const fee=bal*(ocf/100);
+    bal-=fee;
+    cumFees+=fee;
+    cumContrib+=annualContrib;
+    path.push(bal);
+    yearly.push({year:y,balance:bal,cumFees,cumContrib,annualFee:fee});
+  }
+  return{path,yearly,finalBal:bal,cumFees,cumContrib,totalGain:bal-cumContrib};
+}
+
+function projectGross(init,monthlyContrib,years,grossRet){
+  const path=[init];let bal=init;const ac=monthlyContrib*12;
+  for(let y=1;y<=years;y++){bal=bal*(1+grossRet/100)+ac;path.push(bal);}
+  return path;
+}
+
+/* Update */
+function update(){
+  const{init,contrib,years,ret,pOcf,aOcf,alpha}=P;
+  const activeGross=ret+alpha;
+
+  const passive=project(init,contrib,years,ret,pOcf);
+  const active=project(init,contrib,years,activeGross,aOcf);
+  const gross=projectGross(init,contrib,years,ret);
+
+  const pNet=ret-pOcf;
+  const aNet=activeGross-aOcf;
+  const feeDrag=aOcf-pOcf-(alpha); // net cost of choosing active
+
+  // Labels
+  G('v-init').textContent=pound(init);
+  G('v-contrib').textContent=pound(contrib);
+  G('v-years').textContent=years+' yrs';
+  G('v-ret').textContent=pf1(ret);
+  G('v-pOcf').textContent=pf(pOcf);
+  G('v-aOcf').textContent=pf(aOcf);
+  G('v-alpha').textContent=(alpha>=0?'+':'')+pf1(alpha);
+  G('v-pNet').textContent=pf1(pNet);
+  G('v-aNet').textContent=pf1(aNet);
+  G('v-drag').textContent=pf(aOcf-pOcf);
+  G('v-yrs2').textContent=years;
+
+  // KPIs
+  G('kpi-pv').textContent=poundK(passive.finalBal);
+  G('kpi-pv-s').textContent='after '+years+' yrs, '+pf(pOcf)+' OCF';
+  G('kpi-av').textContent=poundK(active.finalBal);
+  G('kpi-av-s').textContent='after '+years+' yrs, '+pf(aOcf)+' OCF'+(alpha!==0?' (α='+(alpha>=0?'+':'')+pf1(alpha)+')':'');
+
+  const costOfActive=passive.finalBal-active.finalBal;
+  G('kpi-cost').textContent=(costOfActive>=0?'':'+£')+poundK(Math.abs(costOfActive));
+  G('kpi-cost').style.color=costOfActive>=0?'#C44':'#1a7a35';
+  G('kpi-cost-s').textContent=costOfActive>=0?'less in your pot with active':'more in your pot with active';
+  G('kpi-cost-card').style.borderTopColor=costOfActive>=0?'#C44':'#1a7a35';
+
+  // Fee share of gain: what % of gross growth does the active fund's fees consume?
+  const grossGrowth=gross[gross.length-1]-passive.cumContrib;
+  const activeFeeShare=grossGrowth>0?(active.cumFees/grossGrowth*100):0;
+  const passiveFeeShare=grossGrowth>0?(passive.cumFees/grossGrowth*100):0;
+  G('kpi-share').textContent=pf1(activeFeeShare);
+
+  // Growth chart
+  const labels=Array.from({length:years+1},(_,i)=>'Yr '+i);
+  growthChart.data.labels=labels;
+  growthChart.data.datasets[0].data=passive.path;
+  growthChart.data.datasets[1].data=active.path;
+  growthChart.data.datasets[2].data=gross;
+  growthChart.update('none');
+  G('growth-sub').textContent='Gross '+pf1(ret)+' · Passive net '+pf1(pNet)+' · Active net '+pf1(aNet)+(alpha!==0?' (incl. '+pf1(alpha)+' alpha)':'');
+
+  // Summary
+  G('s-invested').textContent=pound(passive.cumContrib);
+  G('s-pgrowth').textContent=pound(passive.totalGain);
+  G('s-agrowth').textContent=pound(active.totalGain);
+  G('s-pfees').textContent=pound(passive.cumFees);
+  G('s-afees').textContent=pound(active.cumFees);
+  G('s-extrafees').textContent=pound(active.cumFees-passive.cumFees);
+
+  // Waterfall
+  const wfMax=gross[gross.length-1];
+  const wfData=[
+    {label:'Gross Growth',val:grossGrowth,color:'#BBBBBB'},
+    {label:'Passive Fees',val:passive.cumFees,color:'rgba(159,207,202,0.6)'},
+    {label:'You Keep (Passive)',val:passive.totalGain,color:'#9FCFCA'},
+    {label:'Active Fees',val:active.cumFees,color:'rgba(177,79,197,0.5)'},
+    {label:'You Keep (Active)',val:active.totalGain,color:'#B14FC5'},
+  ];
+  G('wf-container').innerHTML=wfData.map(d=>{
+    const pct=Math.max(0,d.val/grossGrowth*100);
+    return `<div class="wf-bar"><div class="wf-label">${d.label}</div><div class="wf-track"><div class="wf-fill" style="width:${Math.min(100,pct)}%;background:${d.color}">${pct>12?pf1(pct):''}</div></div><div class="wf-val">${pound(d.val)}</div></div>`;
+  }).join('');
+
+  // Stacked bar
+  pieChart.data.datasets[0].data=[passive.totalGain,active.totalGain];
+  pieChart.data.datasets[1].data=[passive.cumFees,active.cumFees];
+  pieChart.update('none');
+
+  // Table
+  const snapYears=[0,1,2,3,4,5,10,15,20,25,30,35,40].filter(y=>y<=years);
+  G('t-body').innerHTML=snapYears.map(y=>{
+    const isHl=y%10===0&&y>0;
+    if(y===0) return `<tr${isHl?' class="hl"':''}><td style="text-align:left" class="fw7">0</td><td>${pound(init)}</td><td>${pound(init)}</td><td>${pound(init)}</td><td>—</td><td>—</td><td>—</td></tr>`;
+    const pRow=passive.yearly[y-1],aRow=active.yearly[y-1];
+    const gap=pRow.balance-aRow.balance;
+    return `<tr${isHl?' class="hl"':''}>
+      <td style="text-align:left" class="fw7">${y}</td>
+      <td>${pound(pRow.cumContrib)}</td>
+      <td style="color:#2a8a84;font-weight:700">${pound(pRow.balance)}</td>
+      <td style="color:#8a3aa0;font-weight:700">${pound(aRow.balance)}</td>
+      <td style="color:#888">${pound(pRow.cumFees)}</td>
+      <td style="color:#C44">${pound(aRow.cumFees)}</td>
+      <td style="color:${gap>=0?'#C44':'#1a7a35'};font-weight:700">${gap>=0?'-':'+'} ${pound(Math.abs(gap))}</td>
+    </tr>`;
+  }).join('');
+}
+
+function switchTab(t){
+  document.querySelectorAll('.pnl').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  G('pnl-'+t).classList.add('active');
+  event.target.classList.add('active');
+  if(t==='growth') growthChart.resize();
+  if(t==='waterfall') pieChart.resize();
+}
+
+/* Bind sliders */
+[['s-init','init'],['s-contrib','contrib'],['s-years','years'],['s-ret','ret'],
+ ['s-pOcf','pOcf'],['s-aOcf','aOcf'],['s-alpha','alpha']
+].forEach(([id,key])=>G(id).addEventListener('input',function(){P[key]=+this.value;update();}));
+
+initCharts();
+
+/* ── URL parameter store / load ── */
+const PARAM_MAP=[['init','init'],['contrib','contrib'],['years','years'],['ret','ret'],['pOcf','pOcf'],['aOcf','aOcf'],['alpha','alpha']];
+const SLIDER_MAP={init:'s-init',contrib:'s-contrib',years:'s-years',ret:'s-ret',pOcf:'s-pOcf',aOcf:'s-aOcf',alpha:'s-alpha'};
+
+function loadFromURL(){
+  const params=new URLSearchParams(window.location.search);
+  let loaded=false;
+  PARAM_MAP.forEach(([urlKey,stateKey])=>{
+    if(params.has(urlKey)){const v=parseFloat(params.get(urlKey));if(!isNaN(v)){P[stateKey]=v;G(SLIDER_MAP[stateKey]).value=v;loaded=true;}}
+  });
+  return loaded;
+}
+
+function storeScenario(){
+  const params=new URLSearchParams();
+  PARAM_MAP.forEach(([urlKey,stateKey])=>params.set(urlKey,P[stateKey]));
+  const url=window.location.origin+window.location.pathname+'?'+params.toString();
+  history.replaceState(null,'',url);
+  navigator.clipboard.writeText(url).then(()=>showToast('Link copied to clipboard')).catch(()=>showToast('URL updated — copy from address bar'));
+}
+
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+loadFromURL();
+update();
+</script>
+</body>
+</html>
