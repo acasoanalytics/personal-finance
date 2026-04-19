@@ -604,7 +604,7 @@
 
 <p>The key insight, and the one that matters for what follows, is that <strong>there is no universally optimal finch</strong>. A thick-billed ground finch would starve on an island of nectar-producing flowers. A slender cactus finch would fail to crack hard seeds. The optimum depends entirely on the environment. Move a finch to a different island and it becomes mediocre or worse. Its fitness is not a property of the bird alone. It is a property of the bird-in-environment.</p>
 
-<h2>Genetic algorithms in one page</h2>
+<h2>A precedent: genetic algorithms</h2>
 
 <p>Computer scientists noticed this same mechanism produces solutions to problems humans cannot easily solve by design. A <strong>genetic algorithm</strong> maintains a population of candidate solutions, each encoded as a chromosome. At each generation, every individual is scored against a fitness function. Fitter individuals reproduce. Two parents produce offspring via <strong>crossover</strong> — swapping segments of their chromosomes. Offspring are occasionally altered by <strong>mutation</strong> — small random changes. Over generations the population converges toward high-fitness solutions.</p>
 
@@ -852,6 +852,75 @@ Low. Prioritise deal completion over margin optimisation.</pre>
 <p>If you run this system across five companies in the same broad category — say, five SaaS businesses doing lead qualification on inbound sign-ups — their champion agents will diverge after 50 generations. The divergence itself is a finding. If four evolved toward prioritising firmographic fit and one toward prioritising engagement depth, that fifth company's conversion patterns are meaningfully different from the others — even though the task description was identical at the start. Evolution has discovered a distinction that was not in the input.</p>
 
 <p>The same logic applies across tasks. A negotiation agent evolved against your specific supplier base will not transfer cleanly to a different supplier base. A support triage agent evolved against your specific ticket distribution will not transfer to an operation with different product failure modes. The specificity is not a limitation — it is the point. You are evolving for <em>your</em> island.</p>
+
+<h2>When the island changes: the case for forgetting</h2>
+
+<p>So far the framework has implicitly assumed <strong>stationarity</strong> — that the environment the agent evolved into is the same environment it will continue to operate in. Patterns learned yesterday are still predictive tomorrow. Accumulate as much accurate belief as possible, pass it to offspring, act confidently on it.</p>
+
+<p>That assumption is reasonable in some domains — the structure of the travelling salesman problem does not change, the rules of a simulated negotiation do not change. But most real business environments are non-stationary. Audience tastes drift. Competitors adapt. Platforms retune their algorithms. Regulation changes. A new entrant rewires the competitive dynamics. What was predictive last quarter is only partly predictive this quarter, and occasionally actively misleading.</p>
+
+<p>This creates a problem the framework has not addressed: <strong>memory accumulation without forgetting is a form of overfitting</strong>. An agent that has memorised exactly what worked in the old environment will resist exploring alternatives even after the environment has shifted. Its memory is actively preventing the adaptation that would find the new optimum. The weight of accumulated evidence works against change, not with it.</p>
+
+<div class="callout">
+  <span class="label">The deeper point</span>
+  <p>Under stationarity, the optimal strategy is to accumulate belief and act confidently on it. Under non-stationarity, the optimal strategy is to hold beliefs loosely, test them continuously, and be willing to discard them. These are incompatible epistemic policies. A real agent needs to know which regime it is in — and how to switch.</p>
+</div>
+
+<h3>Why forgetting is a feature, not a failure</h3>
+
+<p>Biology figured this out a long time ago. Species in fluctuating environments retain more genetic variance than species in stable ones, because preserving optionality matters more than locking in the current local optimum. Immune systems forget older antigens to avoid confusion with new ones. Neural plasticity exists partly to permit the erasure and re-formation of connections. Forgetting is not a bug in memory — it is a necessary function of any adaptive system operating in a changing world.</p>
+
+<p>Four concrete benefits of forgetting in this framework:</p>
+
+<ul class="tight">
+<li><strong>Calibration hygiene.</strong> An agent that tried a strategy six months ago and wrote "this failed" to memory may have failed for reasons that no longer apply. Permanent failure entries permanently exclude strategies that might now work. Periodic forgetting lets the population retest hypotheses that have become valid again.</li>
+<li><strong>Avoiding false confirmation.</strong> An agent that accumulates 200 observations confirming a pattern develops what looks like strong belief. If the underlying pattern was an artefact of a specific moment, the accumulated "evidence" makes the agent harder to correct, not easier.</li>
+<li><strong>Escaping local optima.</strong> Rich memory of what worked actively prevents exploration of what might work now. Memory is its own form of premature convergence — not in the genotype, but in the belief layer above it.</li>
+<li><strong>Diversity preservation.</strong> If all agents inherit rich memory from the same high-fitness ancestors, the population becomes homogeneous in belief as well as genotype. The ability to respond to environmental change depends on having members with different priors. Memory-driven homogenisation is a second-order convergence mechanism that has to be managed.</li>
+</ul>
+
+<h3>Mechanisms for forgetting</h3>
+
+<p>There are several ways to build forgetting into the system, and they map onto different kinds of environmental change:</p>
+
+<pre><span class="c-com"># MEMORY.md with freshness scores</span>
+
+<span class="c-com">## Confirmed Patterns</span>
+- [fresh: 0.82] Rule-based counterparts converge by round 6-7
+    <span class="c-com"># Re-confirmed 3 times in last 10 generations. Still valid.</span>
+
+- [fresh: 0.15] My opening anchor gives away early surplus
+    <span class="c-com"># Not re-confirmed since gen 12. Scheduled for re-test.</span>
+
+- [fresh: 0.04] Aggressive openers trigger bad faith response
+    <span class="c-com"># Evidence from gens 3-8, not seen since. Likely stale.
+    # Will be dropped next generation unless re-confirmed.</span></pre>
+
+<p>The simplest mechanism is <strong>exponential decay</strong>. Each entry in MEMORY.md has a freshness score that decays over time. Observations have to be re-confirmed to maintain their weight. Stale entries fade until they no longer influence behaviour. This handles gradual drift well.</p>
+
+<p><strong>Performance-gated retention</strong> is stronger. An entry persists only as long as predictions based on it continue to verify. The pattern "rule-based counterparts converge by round 6-7" gets tracked: every time an agent's behaviour is conditioned on that belief, the outcome is logged. When the success rate drops below threshold, the pattern is flagged and eventually dropped. This responds to environmental signal directly rather than just to elapsed time.</p>
+
+<p><strong>Distinguished memory classes</strong> recognise that not all memories are equal. Structural patterns ("negotiation surplus is bounded by the gap between reservation prices") are inherently more stationary than environmental ones ("this audience responds to contrarian framing"). Tagging memories by expected volatility and applying different decay rates to each is more faithful to the actual structure of the problem.</p>
+
+<h3>Detecting regime change</h3>
+
+<p>Graceful decay handles gradual drift. It does not handle <strong>regime change</strong> — the abrupt shift where patterns that were predictive suddenly become misleading. When a competitor enters, a platform deprecates a format, or a regulation changes, you want to forget faster than graceful — ideally wiping recent memory entirely rather than letting it decay over months.</p>
+
+<p>Three signals that a regime has shifted:</p>
+
+<ul class="tight">
+<li><strong>Fitness collapse across the population.</strong> Average fitness drops sharply and simultaneously for most agents, not just the risk-takers. The environment has changed on everyone at once.</li>
+<li><strong>Prediction failure rate spike.</strong> Agents have been conditioning behaviour on memory entries and the success rate of those conditionings suddenly drops across the population.</li>
+<li><strong>Selection pressure inversion.</strong> Traits that correlated positively with fitness last week correlate negatively this week. What the environment was rewarding has changed.</li>
+</ul>
+
+<p>When regime change is detected, the right response is not graceful decay — it is a deliberate intervention: clear MEMORY.md, reset freshness scores, increase mutation rate temporarily, and sample more heavily from the archive to reintroduce strategies that were previously outcompeted but may now be adaptive.</p>
+
+<div class="insight">
+  <div class="label">Forgetting as a selected trait</div>
+  <p>The deepest version of this: the SOUL.md itself should encode the agent's forgetting philosophy. Some agents will evolve toward aggressive memory retention (good for stationary environments). Others will evolve toward rapid decay and active forgetting (good for volatile environments). The population will converge on the right epistemic posture for the environment it is actually in — because agents whose forgetting strategy matches their environment simply outperform those whose doesn't.</p>
+  <p>Memory becomes a chromosome trait, not a fixed mechanism. The real Lamarckian advantage isn't passing on all learned knowledge — it is passing on <em>resilient</em> knowledge: the patterns that have survived challenge, the heuristics that have proven stable, the calibrations that have held up across multiple environmental conditions. Forgetting is the selection mechanism operating on memory itself. It is what converts raw observation into durable wisdom.</p>
+</div>
 
 <h2>Real-world applications</h2>
 
