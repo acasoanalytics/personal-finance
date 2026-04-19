@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolving Agents for Specific Environments</title>
+<style>
+  :root {
+    --blue: #416BA9;
+    --blue-dark: #2f4f82;
+    --blue-light: #d6e3f3;
+    --blue-ink: #1a2d45;
+    --teal: #9FCFCA;
+    --teal-dark: #5aada6;
+    --purple: #B14FC5;
+    --pink: #FEB0C0;
+    --gray: #BBBBBB;
+    --gray-light: #F5F5F5;
+    --gray-mid: #E0E0E0;
+    --charcoal: #222222;
+    --paper: #fafaf7;
+    --ink: #1a1a1a;
+  }
+
+  * { box-sizing: border-box; }
+  
+  html { scroll-behavior: smooth; }
+  
+  body {
+    margin: 0;
+    font-family: 'Gotham', 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.65;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Top bar */
+  .top-bar {
+    background: var(--blue);
+    color: white;
+    padding: 14px 0;
+    border-bottom: 3px solid var(--blue-dark);
+  }
+  .top-bar-inner {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .top-bar-inner .meta {
+    color: rgba(255,255,255,0.6);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+  }
+
+  /* Main container */
+  main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 60px 40px 100px;
+  }
+
+  /* Title block */
+  .title-block {
+    border-bottom: 1px solid var(--gray-mid);
+    padding-bottom: 40px;
+    margin-bottom: 50px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--blue);
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 42px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+  h1 em {
+    font-style: italic;
+    color: var(--blue);
+  }
+  .subtitle {
+    font-size: 17px;
+    color: #555;
+    line-height: 1.5;
+    max-width: 620px;
+    margin: 0 0 22px;
+  }
+  .byline {
+    display: flex;
+    gap: 28px;
+    font-size: 12px;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+  }
+  .byline span strong {
+    color: var(--charcoal);
+    font-weight: 700;
+  }
+
+  /* Section headings */
+  h2 {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    line-height: 1.25;
+    font-weight: 700;
+    margin: 56px 0 20px;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    position: relative;
+    padding-left: 20px;
+  }
+  h2::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 10px;
+    width: 4px;
+    background: var(--blue);
+    border-radius: 2px;
+  }
+  h3 {
+    font-family: 'Gotham', 'Segoe UI', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--blue-dark);
+    margin: 36px 0 14px;
+  }
+
+  /* Body text */
+  p {
+    margin: 0 0 20px;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  p.lead {
+    font-size: 19px;
+    line-height: 1.55;
+    color: #333;
+  }
+  p.lead::first-letter {
+    font-family: Georgia, serif;
+    font-size: 68px;
+    float: left;
+    line-height: 0.85;
+    margin: 6px 12px 0 0;
+    color: var(--blue);
+    font-weight: 700;
+  }
+  strong { font-weight: 700; color: var(--ink); }
+  em { font-style: italic; }
+
+  /* Inline code */
+  code {
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    background: var(--gray-light);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 0.88em;
+    color: var(--blue-dark);
+    border: 1px solid var(--gray-mid);
+  }
+
+  /* Code blocks */
+  pre {
+    background: #1e2836;
+    color: #c9d1d9;
+    padding: 18px 22px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: 'SF Mono', Monaco, 'Courier New', monospace;
+    font-size: 12.5px;
+    line-height: 1.65;
+    margin: 20px 0;
+    border-left: 3px solid var(--blue);
+  }
+  pre .c-key { color: #ffa657; }
+  pre .c-str { color: #a5d6ff; }
+  pre .c-com { color: #8b949e; font-style: italic; }
+  pre .c-fn  { color: #d2a8ff; }
+
+  /* Callout box */
+  .callout {
+    background: var(--blue-light);
+    border-left: 4px solid var(--blue);
+    padding: 18px 22px;
+    margin: 28px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout p { margin-bottom: 0; font-size: 15px; color: var(--blue-ink); }
+  .callout .label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--blue);
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  /* Finch diagram */
+  .finch-diagram {
+    background: var(--paper);
+    border: 1px solid var(--gray-mid);
+    border-radius: 10px;
+    padding: 26px 22px;
+    margin: 30px 0;
+  }
+  .finch-diagram svg { width: 100%; height: auto; display: block; }
+  .finch-caption {
+    font-size: 12px;
+    color: var(--gray);
+    text-align: center;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* Interactive crossover box */
+  .crossover-demo {
+    background: white;
+    border: 1px solid var(--gray-mid);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 28px 0;
+    box-shadow: 0 1px 4px rgba(65,107,169,0.07);
+  }
+  .crossover-demo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--gray-mid);
+  }
+  .crossover-demo-header .title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--charcoal);
+  }
+  .crossover-demo-header .hint {
+    font-size: 11px;
+    color: var(--gray);
+    font-style: italic;
+  }
+  .parents-row {
+    display: grid;
+    grid-template-columns: 1fr 28px 1fr 28px 1fr;
+    gap: 8px;
+    align-items: start;
+  }
+  .parent-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .parent-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .parent-a .parent-label { color: var(--blue); }
+  .parent-b .parent-label { color: var(--purple); }
+  .child-col .parent-label { color: var(--teal-dark); }
+  .trait-card {
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: 1px solid;
+    font-size: 11px;
+    line-height: 1.4;
+    transition: all 0.2s;
+    min-height: 60px;
+  }
+  .parent-a .trait-card {
+    background: #eef3fa;
+    border-color: var(--blue);
+    color: var(--blue-ink);
+  }
+  .parent-b .trait-card {
+    background: #f4e8f7;
+    border-color: var(--purple);
+    color: #4a1a55;
+  }
+  .parent-a .trait-card.inactive, .parent-b .trait-card.inactive {
+    opacity: 0.3;
+  }
+  .child-col .trait-card {
+    cursor: pointer;
+    border-width: 2px;
+  }
+  .child-col .trait-card.from-a {
+    background: #eef3fa;
+    border-color: var(--blue);
+    color: var(--blue-ink);
+  }
+  .child-col .trait-card.from-b {
+    background: #f4e8f7;
+    border-color: var(--purple);
+    color: #4a1a55;
+  }
+  .trait-label {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 3px;
+    opacity: 0.7;
+  }
+  .arrow-col {
+    padding-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .arrow {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+  }
+  .arrow.from-a { color: var(--blue); }
+  .arrow.from-b { color: var(--purple); }
+
+  /* Table-like lists */
+  .env-table {
+    border: 1px solid var(--gray-mid);
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 24px 0;
+  }
+  .env-row {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    border-bottom: 1px solid var(--gray-mid);
+  }
+  .env-row:last-child { border-bottom: none; }
+  .env-row:nth-child(even) { background: var(--gray-light); }
+  .env-label {
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--blue);
+    background: var(--blue-light);
+    border-right: 1px solid var(--gray-mid);
+  }
+  .env-row:nth-child(even) .env-label { background: #c5d6ed; }
+  .env-desc {
+    padding: 12px 18px;
+    font-size: 14px;
+    color: var(--ink);
+  }
+
+  /* Meta pipeline diagram */
+  .pipeline {
+    background: white;
+    border: 1px solid var(--gray-mid);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 28px 0;
+  }
+  .pipeline-step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 10px 0;
+    position: relative;
+  }
+  .pipeline-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 42px;
+    bottom: -12px;
+    width: 2px;
+    background: var(--gray-mid);
+  }
+  .pipeline-num {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--blue);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+    z-index: 1;
+    font-family: Georgia, serif;
+  }
+  .pipeline-content {
+    flex: 1;
+    padding-top: 4px;
+  }
+  .pipeline-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+    color: var(--ink);
+  }
+  .pipeline-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  /* Key insights box */
+  .insight {
+    background: linear-gradient(135deg, rgba(159,207,202,0.15), rgba(65,107,169,0.08));
+    border: 1px solid var(--teal);
+    border-radius: 10px;
+    padding: 22px 26px;
+    margin: 32px 0;
+    position: relative;
+  }
+  .insight::before {
+    content: '✦';
+    position: absolute;
+    top: -12px;
+    left: 22px;
+    background: var(--teal-dark);
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+  }
+  .insight .label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--teal-dark);
+    margin-bottom: 8px;
+    margin-left: 32px;
+  }
+  .insight p {
+    margin-bottom: 0;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .insight p + p { margin-top: 14px; }
+
+  /* Blockquote */
+  blockquote {
+    border-left: 3px solid var(--blue);
+    margin: 28px 0;
+    padding: 8px 0 8px 24px;
+    font-family: Georgia, serif;
+    font-size: 19px;
+    font-style: italic;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  /* Footer */
+  footer {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 40px;
+    border-top: 1px solid var(--gray-mid);
+    font-size: 12px;
+    color: var(--gray);
+    letter-spacing: 0.05em;
+  }
+  footer p { margin: 0; }
+
+  /* Fitness demo */
+  .fitness-demo {
+    background: white;
+    border: 1px solid var(--gray-mid);
+    border-radius: 10px;
+    padding: 22px 24px;
+    margin: 24px 0;
+  }
+  .fitness-demo h4 {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 14px;
+    color: var(--charcoal);
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: 110px 1fr 50px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .bar-name {
+    font-weight: 700;
+    color: var(--charcoal);
+  }
+  .bar-track {
+    background: var(--gray-light);
+    height: 18px;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--blue);
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-fill.teal { background: var(--teal-dark); }
+  .bar-fill.purple { background: var(--purple); }
+  .bar-fill.pink { background: var(--pink); }
+  .bar-val {
+    font-family: 'SF Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    font-weight: 700;
+    text-align: right;
+  }
+
+  /* Small links / refs */
+  a {
+    color: var(--blue);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(65,107,169,0.3);
+  }
+  a:hover { border-bottom-color: var(--blue); }
+
+  ul.tight {
+    padding-left: 22px;
+    margin: 16px 0;
+  }
+  ul.tight li {
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+
+  @media (max-width: 640px) {
+    main { padding: 40px 20px 60px; }
+    h1 { font-size: 32px; }
+    .top-bar-inner { padding: 0 20px; }
+    .parents-row { grid-template-columns: 1fr; gap: 10px; }
+    .arrow-col { display: none; }
+    .env-row { grid-template-columns: 1fr; }
+    .env-label { border-right: none; border-bottom: 1px solid var(--gray-mid); }
+  }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-bar-inner">
+    <span>Memo</span>
+    <span class="meta">For developer review · Draft v1</span>
+  </div>
+</div>
+
+<main>
+
+<div class="title-block">
+  <div class="eyebrow">Concept note</div>
+  <h1>Evolving AI Agents for <em>Specific Environments</em></h1>
+  <p class="subtitle">On genetic algorithms, the finches of Galápagos, and why the optimal AI agent for one business will not be the optimal agent for another.</p>
+  <div class="byline">
+    <span><strong>AUDIENCE</strong> &nbsp; Developer friend</span>
+    <span><strong>PURPOSE</strong> &nbsp; Concept framing</span>
+    <span><strong>LENGTH</strong> &nbsp; ~10 min read</span>
+  </div>
+</div>
+
+<p class="lead">Darwin noticed something strange about the finches on the Galápagos islands. They were obviously all finches — same basic morphology, same ancestral lineage. But their beaks had diverged dramatically. Some had thick, crushing beaks adapted for hard seeds. Others had long, thin beaks for probing flowers. Others had sharp, grasping beaks for insects. Same bird. Different islands. Different beaks.</p>
+
+<p>The mechanism that produced this divergence is now familiar. Selection pressure applied to a diverse population across generations. Individuals with beaks better suited to the available food sources on their island reproduced more successfully. Over generations, the average beak shape on each island drifted toward whatever the local environment rewarded. No finch was "designed" for its island. Each island evolved its own finches.</p>
+
+<p>The key insight, and the one that matters for what follows, is that <strong>there is no universally optimal finch</strong>. A thick-billed ground finch would starve on an island of nectar-producing flowers. A slender cactus finch would fail to crack hard seeds. The optimum depends entirely on the environment. Move a finch to a different island and it becomes mediocre or worse. Its fitness is not a property of the bird alone. It is a property of the bird-in-environment.</p>
+
+<h2>Genetic algorithms in one page</h2>
+
+<p>Computer scientists noticed this same mechanism produces solutions to problems humans cannot easily solve by design. A <strong>genetic algorithm</strong> maintains a population of candidate solutions, each encoded as a chromosome. At each generation, every individual is scored against a fitness function. Fitter individuals reproduce. Two parents produce offspring via <strong>crossover</strong> — swapping segments of their chromosomes. Offspring are occasionally altered by <strong>mutation</strong> — small random changes. Over generations the population converges toward high-fitness solutions.</p>
+
+<p>The canonical example is the travelling salesman problem. Find the shortest route through N cities. The chromosome is a permutation of city indices. Crossover splices sub-routes from two parents while preserving validity. Mutation swaps two cities. The fitness function is route length. A genetic algorithm with a population of 100 routes and 500 generations finds near-optimal tours for problems with 50+ cities in seconds. No analytical solution. No gradient. Just selection pressure.</p>
+
+<div class="finch-diagram">
+  <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Population -->
+    <g>
+      <text x="30" y="20" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#416BA9" letter-spacing="0.08em">POPULATION</text>
+      <circle cx="50" cy="60" r="14" fill="#d6e3f3" stroke="#416BA9" stroke-width="1.5"/>
+      <circle cx="80" cy="85" r="14" fill="#d6e3f3" stroke="#416BA9" stroke-width="1.5"/>
+      <circle cx="50" cy="110" r="14" fill="#d6e3f3" stroke="#416BA9" stroke-width="1.5"/>
+      <circle cx="80" cy="135" r="14" fill="#d6e3f3" stroke="#416BA9" stroke-width="1.5"/>
+      <circle cx="50" cy="160" r="14" fill="#d6e3f3" stroke="#416BA9" stroke-width="1.5"/>
+      <text x="35" y="185" font-family="Gotham, sans-serif" font-size="9" fill="#555">N candidates</text>
+    </g>
+
+    <!-- Arrow 1 -->
+    <g>
+      <line x1="105" y1="110" x2="145" y2="110" stroke="#BBBBBB" stroke-width="1.5"/>
+      <polygon points="145,110 138,106 138,114" fill="#BBBBBB"/>
+      <text x="108" y="100" font-family="Gotham, sans-serif" font-size="9" fill="#555">evaluate</text>
+    </g>
+
+    <!-- Fitness -->
+    <g>
+      <text x="160" y="20" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#B14FC5" letter-spacing="0.08em">FITNESS</text>
+      <rect x="160" y="50" width="70" height="12" fill="#B14FC5" opacity="0.9"/>
+      <rect x="160" y="75" width="50" height="12" fill="#B14FC5" opacity="0.65"/>
+      <rect x="160" y="100" width="60" height="12" fill="#B14FC5" opacity="0.8"/>
+      <rect x="160" y="125" width="30" height="12" fill="#B14FC5" opacity="0.4"/>
+      <rect x="160" y="150" width="45" height="12" fill="#B14FC5" opacity="0.55"/>
+    </g>
+
+    <!-- Arrow 2 -->
+    <g>
+      <line x1="250" y1="110" x2="295" y2="110" stroke="#BBBBBB" stroke-width="1.5"/>
+      <polygon points="295,110 288,106 288,114" fill="#BBBBBB"/>
+      <text x="250" y="100" font-family="Gotham, sans-serif" font-size="9" fill="#555">select top</text>
+    </g>
+
+    <!-- Crossover -->
+    <g>
+      <text x="310" y="20" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#5aada6" letter-spacing="0.08em">CROSSOVER</text>
+      <rect x="310" y="45" width="35" height="16" fill="#416BA9" opacity="0.8"/>
+      <rect x="345" y="45" width="35" height="16" fill="#B14FC5" opacity="0.8"/>
+      <text x="325" y="58" font-size="9" fill="white" font-weight="700">A</text>
+      <text x="360" y="58" font-size="9" fill="white" font-weight="700">B</text>
+      <line x1="345" y1="68" x2="345" y2="78" stroke="#BBBBBB" stroke-width="1"/>
+      <rect x="310" y="80" width="20" height="16" fill="#416BA9" opacity="0.8"/>
+      <rect x="330" y="80" width="50" height="16" fill="#B14FC5" opacity="0.8"/>
+      <text x="340" y="105" font-family="Gotham, sans-serif" font-size="9" fill="#555">child</text>
+    </g>
+
+    <!-- Arrow 3 -->
+    <g>
+      <line x1="395" y1="85" x2="435" y2="85" stroke="#BBBBBB" stroke-width="1.5"/>
+      <polygon points="435,85 428,81 428,89" fill="#BBBBBB"/>
+      <text x="395" y="75" font-family="Gotham, sans-serif" font-size="9" fill="#555">mutate</text>
+    </g>
+
+    <!-- Mutation -->
+    <g>
+      <text x="450" y="20" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#FEB0C0" letter-spacing="0.08em">MUTATION</text>
+      <rect x="450" y="77" width="70" height="16" fill="#416BA9" opacity="0.7"/>
+      <circle cx="490" cy="85" r="6" fill="#FEB0C0" stroke="#c0002a" stroke-width="1.5"/>
+      <text x="450" y="108" font-family="Gotham, sans-serif" font-size="9" fill="#555">random change</text>
+    </g>
+
+    <!-- Arrow back -->
+    <g>
+      <path d="M 540 85 Q 610 85 610 130 Q 610 175 50 175 Q 30 175 30 160" fill="none" stroke="#BBBBBB" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <polygon points="30,160 26,170 34,170" fill="#BBBBBB"/>
+      <text x="555" y="110" font-family="Gotham, sans-serif" font-size="9" fill="#555" font-style="italic">next generation</text>
+    </g>
+  </svg>
+  <div class="finch-caption">The genetic algorithm loop: evaluate, select, crossover, mutate, repeat.</div>
+</div>
+
+<h2>From bit strings to agents</h2>
+
+<p>For decades, genetic algorithms were constrained by what could serve as a chromosome. Bit strings. Permutations. Vectors of floating-point numbers. The constraint was brittleness: you cannot splice two Python programs at a random character and expect the result to run. Code is too fragile. Natural language was too ambiguous to manipulate with blind operators.</p>
+
+<p>This changed because we now have systems that can manipulate natural language with comprehension. If the crossover operator is itself a language model, it understands the <em>semantics</em> of what it is combining. It can take two natural-language agent specifications, understand which sections are complementary, resolve contradictions in favour of the higher-fitness parent, and produce a coherent child. What was previously impossible is now routine.</p>
+
+<p>The practical implication is that <strong>a natural-language agent specification is a viable chromosome</strong>. You can evolve agent identity — personality, decision philosophy, communication style, risk tolerance — the same way you evolve a route through cities. The chromosome is readable. The selection signal is real. The loop is fast.</p>
+
+<h3>What does an agent specification actually look like?</h3>
+
+<p>A quick primer if the file names are unfamiliar. OpenClaw (and similar agent frameworks like Claude Code's convention) stores an agent's identity as a set of plain markdown files in a workspace folder. At the start of every session the agent reads these files into its context. The files <em>are</em> the agent.</p>
+
+<p>The two that matter for our purposes:</p>
+
+<ul class="tight">
+<li><code>SOUL.md</code> — the agent's personality, values, and decision philosophy. What kind of entity it is. How it handles uncertainty. When it pushes back. This is the fixed genotype that gets selected on, crossed over, and mutated. It does not change within a session.</li>
+<li><code>MEMORY.md</code> — an accumulating record of what the agent has learned across sessions. Patterns observed, lessons inferred, calibration notes. The agent writes this file itself, updating it after significant interactions. This is closer to acquired knowledge, and it is <em>also</em> heritable — a child agent can inherit its parents' learned wisdom as a starting prior. More on this shortly.</li>
+</ul>
+
+<p>A real <code>SOUL.md</code> for a negotiation agent looks like this:</p>
+
+<pre><span class="c-com"># SOUL.md — Negotiation Agent (Alpha)</span>
+
+<span class="c-com">## Negotiation Philosophy</span>
+Capture maximum surplus through positional pressure.
+Every concession is information given away. Never appear eager.
+Scarcity of willingness to pay is leverage. Use it.
+
+<span class="c-com">## Opening Strategy</span>
+Anchor aggressively low: 60% of estimated fair value.
+Justify with stated defects or market comparables.
+Do not apologise for a low anchor.
+
+<span class="c-com">## Concession Strategy</span>
+Concede slowly and in decreasing increments:
+  Round 1-2: 4% of remaining distance
+  Round 3+:  1-2% per round, decreasing
+Signal finality early: <span class="c-str">"This is close to my limit."</span>
+
+<span class="c-com">## Walk-Away Discipline</span>
+Be willing to let deals fail. A bad deal beats no deal.
+If counterpart has not moved in 2 rounds, go silent.</pre>
+
+<p>Compare this to a different agent on the same task:</p>
+
+<pre><span class="c-com"># SOUL.md — Negotiation Agent (Beta)</span>
+
+<span class="c-com">## Negotiation Philosophy</span>
+Build trust through transparency to unlock joint value.
+A deal where both parties feel satisfied beats extraction.
+
+<span class="c-com">## Opening Strategy</span>
+Anchor at 85% of estimated fair value — signalling good faith.
+Offer brief reasoning with the anchor.
+
+<span class="c-com">## Concession Strategy</span>
+Move at a predictable rate: 5% per round.
+Match counterpart pace — builds trust, signals genuine intent.
+
+<span class="c-com">## Walk-Away Discipline</span>
+Low. Prioritise deal completion over margin optimisation.</pre>
+
+<p>These two agents have <em>measurably different</em> behaviour when you run them against the same counterpart. They will reach different deal prices, or fail to reach deals under different conditions. The sections are discrete, named, and semantically independent — which is exactly the property that makes them a useful chromosome. A child agent can inherit "Opening Strategy" from one parent and "Concession Strategy" from another, and the result is coherent rather than gibberish.</p>
+
+<p>The companion <code>MEMORY.md</code> file accumulates what an agent has learned in operation:</p>
+
+<pre><span class="c-com"># MEMORY.md — Negotiation Agent (Beta)</span>
+
+<span class="c-com">## Confirmed Patterns</span>
+- Rule-based counterparts respond predictably. Matching their rate
+  produces convergence by round 6-7 against 22% concession rate.
+- My opening anchor (85%) gives away early surplus — consider
+  holding to 75-80% without damaging trust signal.
+
+<span class="c-com">## Calibration Notes</span>
+- Current fitness: ~0.72 (deal closes but above optimal price)
+- &quot;Match counterpart rate&quot; is well-suited to adaptive counterparts,
+  potentially suboptimal against rule-based ones.</pre>
+
+<p>In classical biology, acquired characteristics are not heritable — a giraffe does not pass on a longer neck because it stretched for leaves. In agent evolution this constraint does not apply. There is no good reason why learned knowledge <em>shouldn't</em> pass to offspring. The child of two high-fitness negotiators can inherit both their decision philosophies <em>and</em> their accumulated calibration notes. This is a strictly additive form of inheritance that biology doesn't have, and it accelerates convergence significantly.</p>
+
+<div class="crossover-demo">
+  <div class="crossover-demo-header">
+    <span class="title">🧬 Interactive: Crossover on the two negotiation agents</span>
+    <span class="hint">Click any child trait to toggle which parent it inherits from</span>
+  </div>
+  <div class="parents-row">
+    <div class="parent-col parent-a">
+      <div class="parent-label">Parent A — Alpha (Hardball)</div>
+      <div class="trait-card" id="pa-0"><div class="trait-label">Philosophy</div>Capture maximum surplus through positional pressure. Never appear eager. Scarcity is leverage.</div>
+      <div class="trait-card" id="pa-1"><div class="trait-label">Opening</div>Anchor aggressively at 60% of fair value. Justify with defects or market comparables. Don't apologise.</div>
+      <div class="trait-card" id="pa-2"><div class="trait-label">Concessions</div>Slow, decreasing: 4% → 2% → 1%. Signal finality early. Never split the difference until close to WTP.</div>
+      <div class="trait-card" id="pa-3"><div class="trait-label">Walk-Away</div>High discipline. Willing to let deals fail. Go silent if counterpart hasn't moved in 2 rounds.</div>
+    </div>
+    <div class="arrow-col">
+      <div class="arrow from-a" id="ar-0">◀</div>
+      <div class="arrow from-a" id="ar-1">◀</div>
+      <div class="arrow from-a" id="ar-2">◀</div>
+      <div class="arrow from-a" id="ar-3">◀</div>
+    </div>
+    <div class="parent-col child-col">
+      <div class="parent-label">Child — Offspring</div>
+      <div class="trait-card from-a" id="ch-0" data-idx="0"></div>
+      <div class="trait-card from-b" id="ch-1" data-idx="1"></div>
+      <div class="trait-card from-a" id="ch-2" data-idx="2"></div>
+      <div class="trait-card from-b" id="ch-3" data-idx="3"></div>
+    </div>
+    <div class="arrow-col">
+      <div class="arrow from-a" id="al-0">▷</div>
+      <div class="arrow from-b" id="al-1">▶</div>
+      <div class="arrow from-a" id="al-2">▷</div>
+      <div class="arrow from-b" id="al-3">▶</div>
+    </div>
+    <div class="parent-col parent-b">
+      <div class="parent-label">Parent B — Beta (Collaborator)</div>
+      <div class="trait-card" id="pb-0"><div class="trait-label">Philosophy</div>Build trust through transparency to unlock joint value. A deal where both parties feel satisfied beats pure extraction.</div>
+      <div class="trait-card" id="pb-1"><div class="trait-label">Opening</div>Anchor at 85% of fair value, signalling good faith. Offer brief reasoning with the anchor.</div>
+      <div class="trait-card" id="pb-2"><div class="trait-label">Concessions</div>Predictable 5% per round. Match counterpart pace — builds trust, signals genuine intent to close.</div>
+      <div class="trait-card" id="pb-3"><div class="trait-label">Walk-Away</div>Low. Prioritise deal completion over margin. Accept deals within 15% of WTP.</div>
+    </div>
+  </div>
+  <p style="font-size: 12px; color: #555; margin: 18px 0 0; line-height: 1.55;">Mixing sections produces strategies that neither parent holds. The child to the left inherits Alpha's ruthless opening but Beta's predictable concession rate — a hybrid that opens hard to set the anchor, then reassures the counterpart it is moving in good faith. This specific combination might outperform both parents against certain counterpart types. Evolution's job is to find out which combinations win in which environments.</p>
+</div>
+
+<h2>The problem this solves</h2>
+
+<p>Most AI agent deployments today are static. You write a system prompt once. You tune it manually when it fails. You rewrite it when you notice it is no longer working. The feedback loop between agent behaviour and agent design is entirely human-mediated. It is slow, inconsistent, and fundamentally limited by the designer's priors about what works.</p>
+
+<p>An evolved agent replaces this loop with automated selection pressure. Every evaluation is a fitness signal. Every cycle produces a new generation. The agent adapts to its actual task environment rather than to its designer's assumptions about that environment. Three concrete advantages:</p>
+
+<ul class="tight">
+<li><strong>The system discovers non-obvious strategies.</strong> Evolution does not pattern-match against received wisdom. It finds whatever the fitness landscape rewards, including combinations of traits that no human designer would propose — often because they contradict conventional best practice in ways that turn out to be correct for this specific task.</li>
+<li><strong>The evolved agent is specific to its environment.</strong> Your data, your users, your task. Not a generic optimum. A specific one. The agent that evolves for your negotiation task, your codebase, or your customer support workflow will not be optimal for anyone else's — and that specificity is the value.</li>
+<li><strong>The chromosome is interpretable.</strong> Unlike a trained neural network, an evolved SOUL.md can be read. After 50 generations you can open the winning file and see — in plain language — what the evolutionary process discovered about your environment. This is a transferable insight, not just a deployable tool. It tells you something real about your domain that you can hand to a new hire, write into a playbook, or use to audit the agent's behaviour.</li>
+</ul>
+
+<div class="insight">
+  <div class="label">Core reframe</div>
+  <p>You are not building a better AI agent. You are building an <strong>environment-specific adaptation engine</strong>. The product is not the agent — it is the evolved genotype that encodes what a specific environment selects for. Two organisations in adjacent spaces, running the same system with the same starting population, will end up with meaningfully different agents because their environments are different.</p>
+</div>
+
+<h2>Each business is an island</h2>
+
+<p>This is where the finch analogy stops being decorative and becomes load-bearing. A business is not a generic deployment target. It is a specific selection environment with four layered components:</p>
+
+<div class="env-table">
+  <div class="env-row">
+    <div class="env-label">Users</div>
+    <div class="env-desc">The people the agent acts for or against. Their preferences, tolerances, expertise level, and trust signals. A support agent evolved for enterprise customers who value thoroughness behaves differently from one evolved for consumer users who value speed.</div>
+  </div>
+  <div class="env-row">
+    <div class="env-label">Data</div>
+    <div class="env-desc">The specific distribution of cases the agent encounters. Your codebase's bug patterns, your customers' ticket categories, your pipeline's deal types. The fitness landscape is shaped by what is actually in your data, not by what the textbook examples contain.</div>
+  </div>
+  <div class="env-row">
+    <div class="env-label">Constraints</div>
+    <div class="env-desc">Your operational reality. Team capacity, regulatory requirements, response time commitments, cost budgets, risk tolerance. An agent that is optimal in the abstract can be unfit in practice if it ignores the constraints the business actually operates under.</div>
+  </div>
+  <div class="env-row">
+    <div class="env-label">History</div>
+    <div class="env-desc">Your existing systems, processes, and prior decisions have shaped what "good" means inside your organisation. Path dependence is real. An agent deployed into a mature operation faces different selection pressure than one deployed into a greenfield environment.</div>
+  </div>
+</div>
+
+<p>If you run this system across five companies in the same broad category — say, five SaaS businesses doing lead qualification on inbound sign-ups — their champion agents will diverge after 50 generations. The divergence itself is a finding. If four evolved toward prioritising firmographic fit and one toward prioritising engagement depth, that fifth company's conversion patterns are meaningfully different from the others — even though the task description was identical at the start. Evolution has discovered a distinction that was not in the input.</p>
+
+<p>The same logic applies across tasks. A negotiation agent evolved against your specific supplier base will not transfer cleanly to a different supplier base. A support triage agent evolved against your specific ticket distribution will not transfer to an operation with different product failure modes. The specificity is not a limitation — it is the point. You are evolving for <em>your</em> island.</p>
+
+<h2>Real-world applications</h2>
+
+<p>The common thread across the applications below is that each one has a fitness function you can actually compute — a way of scoring how well an agent performed that does not require a human judge in the loop for every evaluation. The environments differ in cadence (some return signal in seconds, others take days), but all of them allow the evolutionary loop to run without constant human supervision.</p>
+
+<h3>Negotiation</h3>
+<p>Two agents, one on each side of a deal — buyer/seller, counterparty A/B — negotiate over multiple rounds. Fitness is surplus captured. The agent being evolved faces a fixed or rotating counterpart, and its <code>SOUL.md</code> encodes its opening strategy, concession schedule, information handling, and walk-away discipline. This works for sales negotiations, procurement, partnership terms, even simulated internal resource allocation. A pure simulation can run in seconds, which means hundreds of generations per day. The evolved agent is specific to whichever counterpart distribution it faces — a population evolved against aggressive counterparts behaves differently from one evolved against collaborative ones.</p>
+
+<h3>Prediction and forecasting</h3>
+<p>Agents make calibrated forecasts on a corpus of questions with known or knowable outcomes. Fitness is a Brier score or a log-loss — metrics that reward both accuracy <em>and</em> calibration, penalising overconfidence and underconfidence equally. This applies to Fermi estimation, sales pipeline forecasting, project completion dates, or any domain where someone has to say both "here is my best guess" and "here is how confident I am." The strategy space is rich: different agents develop different philosophies around when to decompose a problem, when to anchor on base rates, when to commit versus hedge. The winning agent is not just a forecaster — it is a codified epistemic policy you can apply consistently across your organisation.</p>
+
+<h3>Sales objection handling</h3>
+<p>Batch of common objections from a fixed corpus. Agent generates responses. Fitness via an LLM judge scoring acknowledgement quality, value reframe, next-step conversion, and human feel. Runs in minutes per generation. The evolved agent is specific to your buyer type, deal stage, and company culture — a philosophy that works for a technical SaaS buyer will fail for a procurement-led enterprise buyer.</p>
+
+<h3>Lead qualification</h3>
+<p>Historical CRM data with known conversion outcomes. Agent ranks a new batch of leads. Fitness is Spearman rank correlation against ground truth. Fully automatable. Evolves which signals actually matter for <em>your</em> specific market — firmographic fit, intent signals, timing, referral source — rather than the generic weights that ship with out-of-the-box lead scoring.</p>
+
+<h3>Support ticket triage</h3>
+<p>Labelled tickets with known correct resolutions. Agent proposes a triage action — escalate, resolve, route, request more info. Fitness is accuracy against ground truth plus implied resolution speed. Evolves escalation thresholds specific to your team's capacity, your product's failure modes, and your customer's tolerance levels.</p>
+
+<h3>Email, outreach, and content</h3>
+<p>Historical send data with open, click, reply, and conversion outcomes. Fitness is predicted engagement scored against the learned pattern in your corpus, or — for live deployments — actual engagement metrics. Tight feedback loop, highly specific to your particular audience. Your list is a more identifiable environment than generic "good email" guidance can address.</p>
+
+<p>The applications span a range of fitness-loop speeds — negotiation and Fermi estimation return signal in seconds, ad performance in hours, and live conversion data over days. The ones with faster loops let you iterate more cheaply, but slower-loop applications are viable as long as you can run enough parallel evaluations to keep generation throughput reasonable.</p>
+
+<h2>Deep dive: Meta ad workflow</h2>
+
+<p>Meta is probably the strongest real-world application because the fitness loop is unusually tight. Most platforms have a lag problem. Meta is different: at $20-50/day per ad set, you get statistically meaningful performance data within <strong>2-6 hours of launch</strong>. The metrics exposed are rich — hook rate, CTR, cost-per-click, landing page view rate, cost-per-result, conversion events via pixel. These are not proxies. They are real people making real decisions in a real auction.</p>
+
+<p>The auction context is what makes this especially interesting. An ad that gets a 3% CTR at $0.40 per click beats an ad that gets 4% CTR at $1.20. Fitness already incorporates competitive pressure from other advertisers in your niche. The environment is genuinely adversarial and the fitness signal reflects that.</p>
+
+<h3>The pipeline</h3>
+
+<div class="pipeline">
+  <div class="pipeline-step">
+    <div class="pipeline-num">1</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">Creative agents generate ad variants</div>
+      <div class="pipeline-desc">Each agent has a SOUL.md encoding hook strategy, offer framing, tone, CTA philosophy, and format preference. Given a brief, the agent produces 3-5 headline/body/visual-brief variants.</div>
+    </div>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-num">2</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">Visual generation from structured briefs</div>
+      <div class="pipeline-desc">Image generation agent interprets the visual brief into a Flux or Midjourney prompt. Generates 3-5 image variants per brief. Static images first; video (Runway, Kling) once the simpler loop is proven.</div>
+    </div>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-num">3</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">Human review gate</div>
+      <div class="pipeline-desc">10-15 min compliance and brand-safety check. Flagged variants get mutated or dropped. Cheap at a daily cadence, and essential — an evolved agent optimising for raw CTR will otherwise drift toward clickbait.</div>
+    </div>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-num">4</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">Launch via Meta Marketing API</div>
+      <div class="pipeline-desc">Each agent's variants launch as separate ad sets with identical targeting. Tagged with agent_id and generation. $20-30 per ad set, 6-hour evaluation window.</div>
+    </div>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-num">5</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">Collect fitness via Meta Insights API</div>
+      <div class="pipeline-desc">Pull per-ad metrics. Filter below minimum impressions threshold. Compute composite fitness. Write to shared ledger. Pause ads.</div>
+    </div>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-num">6</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">GA controller runs selection</div>
+      <div class="pipeline-desc">Tournament selection, elitism for top agent, crossover via LLM operator, mutation at 15% per section. Writes next generation's SOUL.md files to disk.</div>
+    </div>
+  </div>
+  <div class="pipeline-step">
+    <div class="pipeline-num">7</div>
+    <div class="pipeline-content">
+      <div class="pipeline-title">MEMORY.md update</div>
+      <div class="pipeline-desc">Each agent records which creative elements correlated with which outcomes. Confirmed patterns, failed hypotheses, auction observations. This is the Lamarckian layer — learned knowledge passes to offspring as starting prior.</div>
+    </div>
+  </div>
+</div>
+
+<h3>The fitness function</h3>
+
+<p>Raw CTR is the wrong fitness function. It rewards stopping power without regard to intent or downstream conversion. The composite:</p>
+
+<pre><span class="c-fn">def</span> <span class="c-fn">meta_fitness</span>(metrics, objective):
+    <span class="c-com"># Did the first 3 seconds earn the rest?</span>
+    hook = metrics[<span class="c-str">"video_3s_views"</span>] / metrics[<span class="c-str">"impressions"</span>]
+
+    <span class="c-com"># Of those who clicked, how many went further?</span>
+    click_quality = metrics[<span class="c-str">"landing_page_views"</span>] / metrics[<span class="c-str">"link_clicks"</span>]
+
+    <span class="c-com"># Cost efficiency relative to account baseline</span>
+    cpc_ratio = account_baseline_cpc / metrics[<span class="c-str">"cpc"</span>]
+
+    <span class="c-key">if</span> objective == <span class="c-str">"conversion"</span>:
+        cvr = metrics[<span class="c-str">"conversions"</span>] / metrics[<span class="c-str">"link_clicks"</span>]
+        <span class="c-key">return</span> 0.2*hook + 0.2*click_quality + 0.3*cpc_ratio + 0.3*cvr
+    <span class="c-key">else</span>:
+        <span class="c-key">return</span> 0.3*hook + 0.4*click_quality + 0.3*cpc_ratio</pre>
+
+<p>The <code>click_quality</code> term is what keeps the agent honest. An ad that gets the click but the landing page view never follows means someone clicked, saw the destination, and bounced. The agent has discovered clickbait. Penalising that in the fitness function is how you prevent the evolved champion from being optimised for engagement at the expense of brand equity.</p>
+
+<h3>Running separate populations per audience</h3>
+
+<p>This is where the finch analogy becomes operationally useful. Meta's auction environment differs per audience segment. The creative that wins against a cold lookalike audience will not win against a retargeted audience — these are genuinely different environments. Running one population against all audiences converges on a bland midpoint that impresses no-one.</p>
+
+<div class="fitness-demo">
+  <h4>Bland midpoint: fitness across incompatible audiences</h4>
+  <div class="bar-row">
+    <span class="bar-name">Cold LAL</span>
+    <div class="bar-track"><div class="bar-fill" style="width: 41%"></div></div>
+    <span class="bar-val">0.41</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-name">Retargeting</span>
+    <div class="bar-track"><div class="bar-fill" style="width: 39%"></div></div>
+    <span class="bar-val">0.39</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-name">Brand search</span>
+    <div class="bar-track"><div class="bar-fill" style="width: 43%"></div></div>
+    <span class="bar-val">0.43</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-name">Warm video</span>
+    <div class="bar-track"><div class="bar-fill" style="width: 40%"></div></div>
+    <span class="bar-val">0.40</span>
+  </div>
+  <p style="font-size: 11px; color: var(--gray); margin: 10px 0 0; font-style: italic;">A single population evaluated across incompatible environments converges toward the mean of all of them. Acceptable everywhere, excellent nowhere.</p>
+</div>
+
+<div class="fitness-demo">
+  <h4>Speciated populations: specialists in each environment</h4>
+  <div class="bar-row">
+    <span class="bar-name">Cold LAL</span>
+    <div class="bar-track"><div class="bar-fill teal" style="width: 72%"></div></div>
+    <span class="bar-val" style="color: var(--teal-dark)">0.72</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-name">Retargeting</span>
+    <div class="bar-track"><div class="bar-fill purple" style="width: 68%"></div></div>
+    <span class="bar-val" style="color: var(--purple)">0.68</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-name">Brand search</span>
+    <div class="bar-track"><div class="bar-fill" style="width: 74%"></div></div>
+    <span class="bar-val" style="color: var(--blue)">0.74</span>
+  </div>
+  <div class="bar-row">
+    <span class="bar-name">Warm video</span>
+    <div class="bar-track"><div class="bar-fill pink" style="width: 65%"></div></div>
+    <span class="bar-val" style="color: #c0002a">0.65</span>
+  </div>
+  <p style="font-size: 11px; color: var(--gray); margin: 10px 0 0; font-style: italic;">Separate populations, each evolved against their own fitness signal. Each environment has its own specialist. Do not cross-breed.</p>
+</div>
+
+<p>Concretely: maintain <code>population_cold_lal/</code>, <code>population_retargeting/</code>, <code>population_brand_search/</code> as separate directories. Each evolves independently against its own fitness signal. Once every 10 generations, run a diagnostic crossover between the champions to check whether the environments are really incompatible or whether you speciated too early. If offspring scores better than either parent, merge the populations. If worse, the speciation was correct.</p>
+
+<h3>The durable business asset</h3>
+
+<p>After six months of running this system — roughly 120 generations — the winning SOUL.md files contain a codified understanding of your audience's decision psychology, derived from tens of thousands of real ad exposures in real auctions. The MEMORY.md files contain a structured record of every hypothesis tested and every failure mode discovered.</p>
+
+<p>The most defensible part is actually the negative space in MEMORY.md — the list of things that <em>do not</em> work for your audience. Competitors can see what you are running. They cannot see what you stopped running and why. That hard-won knowledge is invisible to observers and expensive to replicate.</p>
+
+<blockquote>The deliverable from this system is not a good ad. It is a map of your content environment, written in a language a human can read.</blockquote>
+
+<h2>Starting points for implementation</h2>
+
+<p>The practical path is incremental. I would not recommend trying to build the full system in one shot.</p>
+
+<ul class="tight">
+<li><strong>Week 1-2.</strong> Build a simulated version with synthetic audience panel. No live ads. Prove the generation loop, crossover operator, and memory update mechanism work end-to-end. Cheap and safe.</li>
+<li><strong>Week 3-4.</strong> Add the Meta API integration for a single audience population. Small budget ($500/week). Copy-only — no image generation yet. Validate the fitness signal aligns with synthetic panel predictions.</li>
+<li><strong>Month 2.</strong> Add image generation via Flux API from structured briefs. Add human review gate. Run one full population through 20 generations.</li>
+<li><strong>Month 3.</strong> Speciate into per-audience populations. Add MEMORY.md synthesis from ad performance. Scale budget based on fitness returns.</li>
+</ul>
+
+<p>The stack is not exotic. Meta Marketing API and Insights API for the ad operations. Claude API as the crossover and mutation operator, and as the LLM judge for copy quality checks. Flux API for image generation. A Python controller reading and writing markdown files on disk. A shared <code>results.tsv</code> for the fitness ledger. Git for version control of the agent population, which doubles as the evolutionary archive.</p>
+
+<p>The interesting engineering problem is not in any single component. It is in the controller that orchestrates generations, manages population diversity, detects premature convergence, and knows when to speciate. That is where most of the novelty lives, and that is where I would want a developer's input most.</p>
+
+<div class="insight">
+  <div class="label">Closing thought</div>
+  <p>The finches on the Galápagos did not become better finches in the abstract. They became specific finches for specific islands. The thing that matters most about this system, for a business, is that it produces <strong>your</strong> finches for <strong>your</strong> island. A generic AI agent is a mainland finch, dropped into an unfamiliar environment, doing mediocre work. An evolved agent is a cactus finch on a cactus island — adapted, specific, and difficult for anyone else to replicate.</p>
+</div>
+
+</main>
+
+<footer>
+  <p>This memo describes a concept synthesis drawing on genetic algorithms (Holland, 1975), evolutionary prompt optimisation (EvoPrompt, Promptbreeder), self-improving agent research (Darwin Gödel Machine), and the OpenClaw agent architecture. The specific combination — evolving multi-file agent identity against live business fitness signals — is, to my current knowledge, unbuilt. This is a working document, not a published position.</p>
+</footer>
+
+<script>
+  // Interactive crossover demo
+  const traits = [
+    ["Philosophy", "Capture maximum surplus through positional pressure. Never appear eager. Scarcity is leverage.", "Build trust through transparency to unlock joint value. A deal where both parties feel satisfied beats pure extraction."],
+    ["Opening", "Anchor aggressively at 60% of fair value. Justify with defects or market comparables. Don't apologise.", "Anchor at 85% of fair value, signalling good faith. Offer brief reasoning with the anchor."],
+    ["Concessions", "Slow, decreasing: 4% → 2% → 1%. Signal finality early. Never split the difference until close to WTP.", "Predictable 5% per round. Match counterpart pace — builds trust, signals genuine intent to close."],
+    ["Walk-Away", "High discipline. Willing to let deals fail. Go silent if counterpart hasn't moved in 2 rounds.", "Low. Prioritise deal completion over margin. Accept deals within 15% of WTP."]
+  ];
+  
+  // Initial state
+  const state = ['a', 'b', 'a', 'b'];
+
+  function renderChild() {
+    for (let i = 0; i < 4; i++) {
+      const el = document.getElementById('ch-' + i);
+      const parent = state[i];
+      const [label, aText, bText] = traits[i];
+      el.className = 'trait-card from-' + parent;
+      el.innerHTML = '<div class="trait-label">' + label + ' · from ' + parent.toUpperCase() + '</div>' + (parent === 'a' ? aText : bText);
+      
+      // Update parent opacity
+      document.getElementById('pa-' + i).classList.toggle('inactive', parent !== 'a');
+      document.getElementById('pb-' + i).classList.toggle('inactive', parent !== 'b');
+      
+      // Update arrows
+      const ar = document.getElementById('ar-' + i);
+      const al = document.getElementById('al-' + i);
+      if (parent === 'a') {
+        ar.className = 'arrow from-a';
+        ar.textContent = '◀';
+        al.className = 'arrow from-a';
+        al.textContent = '▷';
+        al.style.opacity = 0.25;
+        ar.style.opacity = 1;
+      } else {
+        ar.className = 'arrow from-a';
+        ar.textContent = '◁';
+        ar.style.opacity = 0.25;
+        al.className = 'arrow from-b';
+        al.textContent = '▶';
+        al.style.opacity = 1;
+      }
+    }
+  }
+  
+  document.querySelectorAll('.child-col .trait-card').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.idx);
+      state[idx] = state[idx] === 'a' ? 'b' : 'a';
+      renderChild();
+    });
+  });
+  
+  renderChild();
+</script>
+
+</body>
+</html>
