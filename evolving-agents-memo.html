@@ -828,30 +828,164 @@ Low. Prioritise deal completion over margin optimisation.</pre>
 
 <h2>Each business is an island</h2>
 
-<p>This is where the finch analogy stops being decorative and becomes load-bearing. A business is not a generic deployment target. It is a specific selection environment with four layered components:</p>
+<p>This is where the finch analogy stops being decorative and becomes load-bearing. A business is not a generic deployment target. It is a specific selection environment — a specific set of conditions that determines which agent traits are fit and which are not. The optimum is not a property of the agent. It is a property of the agent-in-environment.</p>
+
+<p>The practical consequence is that <strong>there is no universally optimal agent for any non-trivial task</strong>. An agent that excels at support ticket triage for one company will perform measurably worse when deployed at another, even in the same industry, even with the same product category, even with the same ticket volume. The difference comes from the selection environment, which is always specific.</p>
+
+<p>A business environment has four layered components. Each exerts its own selection pressure on the population:</p>
 
 <div class="env-table">
   <div class="env-row">
     <div class="env-label">Users</div>
-    <div class="env-desc">The people the agent acts for or against. Their preferences, tolerances, expertise level, and trust signals. A support agent evolved for enterprise customers who value thoroughness behaves differently from one evolved for consumer users who value speed.</div>
+    <div class="env-desc">The people the agent acts for or against. Their preferences, tolerances, expertise level, and trust signals. A support agent evolved for enterprise customers who value thoroughness behaves differently from one evolved for consumer users who value speed. This is often the dominant selection pressure.</div>
   </div>
   <div class="env-row">
     <div class="env-label">Data</div>
-    <div class="env-desc">The specific distribution of cases the agent encounters. Your codebase's bug patterns, your customers' ticket categories, your pipeline's deal types. The fitness landscape is shaped by what is actually in your data, not by what the textbook examples contain.</div>
+    <div class="env-desc">The specific distribution of cases the agent encounters. Your codebase's bug patterns, your customers' ticket categories, your pipeline's deal types. The fitness landscape is shaped by what is actually in your data, not by what the textbook examples contain. Two companies with identical ICP descriptions can have very different case distributions.</div>
   </div>
   <div class="env-row">
     <div class="env-label">Constraints</div>
-    <div class="env-desc">Your operational reality. Team capacity, regulatory requirements, response time commitments, cost budgets, risk tolerance. An agent that is optimal in the abstract can be unfit in practice if it ignores the constraints the business actually operates under.</div>
+    <div class="env-desc">Your operational reality. Team capacity, regulatory requirements, response time commitments, cost budgets, risk tolerance. An agent that is optimal in the abstract can be unfit in practice if it ignores the constraints the business actually operates under. A clinical diagnostic agent at a hospital has different constraints from one in a research lab.</div>
   </div>
   <div class="env-row">
     <div class="env-label">History</div>
-    <div class="env-desc">Your existing systems, processes, and prior decisions have shaped what "good" means inside your organisation. Path dependence is real. An agent deployed into a mature operation faces different selection pressure than one deployed into a greenfield environment.</div>
+    <div class="env-desc">Your existing systems, processes, and prior decisions have shaped what "good" means inside your organisation. Path dependence is real. An agent deployed into a mature operation faces different selection pressure than one deployed into a greenfield environment. Historical choices constrain what new choices can even be considered.</div>
   </div>
 </div>
 
-<p>If you run this system across five companies in the same broad category — say, five SaaS businesses doing lead qualification on inbound sign-ups — their champion agents will diverge after 50 generations. The divergence itself is a finding. If four evolved toward prioritising firmographic fit and one toward prioritising engagement depth, that fifth company's conversion patterns are meaningfully different from the others — even though the task description was identical at the start. Evolution has discovered a distinction that was not in the input.</p>
+<h3>Divergence as a finding</h3>
 
-<p>The same logic applies across tasks. A negotiation agent evolved against your specific supplier base will not transfer cleanly to a different supplier base. A support triage agent evolved against your specific ticket distribution will not transfer to an operation with different product failure modes. The specificity is not a limitation — it is the point. You are evolving for <em>your</em> island.</p>
+<p>Put this logic to work and something useful happens. Run the system across several businesses in the same broad category — five SaaS companies doing lead qualification on inbound sign-ups — and start them from the same seed population. Give them the same starting SOUL.md files. Apply the same evolutionary mechanics. After 50 generations, their champion agents will have diverged.</p>
+
+<div class="finch-diagram">
+  <svg viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg">
+    <!-- Shared seed population -->
+    <g>
+      <text x="20" y="20" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#416BA9" letter-spacing="0.08em">SEED POPULATION</text>
+      <text x="20" y="35" font-family="Gotham, sans-serif" font-size="9" fill="#555" font-style="italic">Identical starting agents</text>
+      <rect x="20" y="50" width="110" height="140" fill="#d6e3f3" stroke="#416BA9" stroke-width="1" rx="6"/>
+      <circle cx="50" cy="80" r="10" fill="#416BA9" opacity="0.6"/>
+      <circle cx="80" cy="90" r="10" fill="#416BA9" opacity="0.6"/>
+      <circle cx="50" cy="115" r="10" fill="#416BA9" opacity="0.6"/>
+      <circle cx="100" cy="120" r="10" fill="#416BA9" opacity="0.6"/>
+      <circle cx="65" cy="145" r="10" fill="#416BA9" opacity="0.6"/>
+      <circle cx="95" cy="165" r="10" fill="#416BA9" opacity="0.6"/>
+      <text x="75" y="210" font-family="Gotham, sans-serif" font-size="9" fill="#555" text-anchor="middle">identical inputs</text>
+    </g>
+
+    <!-- Branch arrows -->
+    <g stroke="#BBBBBB" stroke-width="1.5" fill="none">
+      <path d="M 130 90 Q 200 90 240 70"/>
+      <path d="M 130 120 Q 200 120 240 120"/>
+      <path d="M 130 150 Q 200 150 240 170"/>
+    </g>
+    <text x="180" y="55" font-family="Gotham, sans-serif" font-size="9" fill="#555" font-style="italic">50 generations</text>
+
+    <!-- Business A -->
+    <g>
+      <rect x="250" y="45" width="180" height="55" fill="#eef3fa" stroke="#416BA9" stroke-width="1.5" rx="6"/>
+      <text x="260" y="63" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#416BA9" letter-spacing="0.05em">BUSINESS A</text>
+      <text x="260" y="78" font-family="Gotham, sans-serif" font-size="9" fill="#1a2d45">Champion evolves toward:</text>
+      <text x="260" y="91" font-family="Gotham, sans-serif" font-size="9" font-weight="700" fill="#2f4f82">firmographic fit dominant</text>
+    </g>
+
+    <!-- Business B -->
+    <g>
+      <rect x="250" y="108" width="180" height="55" fill="#f4e8f7" stroke="#B14FC5" stroke-width="1.5" rx="6"/>
+      <text x="260" y="126" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#B14FC5" letter-spacing="0.05em">BUSINESS B</text>
+      <text x="260" y="141" font-family="Gotham, sans-serif" font-size="9" fill="#4a1a55">Champion evolves toward:</text>
+      <text x="260" y="154" font-family="Gotham, sans-serif" font-size="9" font-weight="700" fill="#7a2a8f">intent signals dominant</text>
+    </g>
+
+    <!-- Business C -->
+    <g>
+      <rect x="250" y="170" width="180" height="55" fill="#e8f5f4" stroke="#5aada6" stroke-width="1.5" rx="6"/>
+      <text x="260" y="188" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#5aada6" letter-spacing="0.05em">BUSINESS C</text>
+      <text x="260" y="203" font-family="Gotham, sans-serif" font-size="9" fill="#1a3d3b">Champion evolves toward:</text>
+      <text x="260" y="216" font-family="Gotham, sans-serif" font-size="9" font-weight="700" fill="#3a6e6a">engagement depth dominant</text>
+    </g>
+
+    <!-- Insight arrow -->
+    <g>
+      <line x1="445" y1="135" x2="475" y2="135" stroke="#B14FC5" stroke-width="1.5"/>
+      <polygon points="475,135 468,131 468,139" fill="#B14FC5"/>
+    </g>
+
+    <!-- Insight box -->
+    <g>
+      <rect x="485" y="60" width="180" height="150" fill="rgba(159,207,202,0.12)" stroke="#5aada6" stroke-width="1" rx="6" stroke-dasharray="3 3"/>
+      <text x="495" y="80" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#5aada6" letter-spacing="0.08em">THE FINDING</text>
+      <text x="495" y="100" font-family="Gotham, sans-serif" font-size="10" fill="#1a1a1a">Same task description.</text>
+      <text x="495" y="114" font-family="Gotham, sans-serif" font-size="10" fill="#1a1a1a">Same starting population.</text>
+      <text x="495" y="128" font-family="Gotham, sans-serif" font-size="10" fill="#1a1a1a">Different environments.</text>
+      <text x="495" y="152" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#2f4f82">Divergence itself</text>
+      <text x="495" y="166" font-family="Gotham, sans-serif" font-size="10" font-weight="700" fill="#2f4f82">is the signal.</text>
+      <text x="495" y="186" font-family="Gotham, sans-serif" font-size="9" fill="#555" font-style="italic">Each company's audience</text>
+      <text x="495" y="198" font-family="Gotham, sans-serif" font-size="9" fill="#555" font-style="italic">is meaningfully different</text>
+      <text x="495" y="210" font-family="Gotham, sans-serif" font-size="9" fill="#555" font-style="italic">even when it wasn't supposed to be.</text>
+    </g>
+  </svg>
+  <div class="finch-caption">Identical seed populations, evolved against three different business environments. What diverges and what persists are both informative.</div>
+</div>
+
+<p>The divergence is itself a finding. If four companies evolved toward prioritising firmographic fit and one toward engagement depth, that fifth company's conversion patterns are meaningfully different from the others — even though the task description was identical at the start. The system has discovered a distinction that was not in the input. You have learned something about your business that you could not have learned without the comparison.</p>
+
+<p>This is not a hypothetical. It is a direct consequence of environmental specificity. If you ran the same experiment on audience-facing negotiation agents across five B2B companies, you would see different concession strategies emerge. If you ran it on support triage across three hospitals, you would see different escalation philosophies. The specificity is not noise. It is information.</p>
+
+<h3>A worked comparison: two SaaS companies, identical task</h3>
+
+<p>Consider two SaaS companies — call them SaaS-A and SaaS-B — both running a lead qualification agent on inbound sign-ups. Identical ICP on paper. Both target "mid-market B2B operations leaders." Both have a similar pricing model. Both started with the same seed population of six archetype agents. Fifty generations later, their champion SOUL.md files look like this:</p>
+
+<pre><span class="c-com"># SOUL.md — SaaS-A Champion (Gen 50)</span>
+
+<span class="c-com">## Qualification Philosophy</span>
+Weight firmographic fit above all other signals.
+Company size, sector, tech stack maturity are leading indicators.
+Engagement signals are unreliable — sales cycles here are long and
+most high-intent prospects look low-intent until they commit.
+
+<span class="c-com">## Signal Weighting</span>
+Firmographic match:    0.55
+Tech stack signals:    0.25
+Timing/intent:         0.15
+Referral source:       0.05</pre>
+
+<pre><span class="c-com"># SOUL.md — SaaS-B Champion (Gen 50)</span>
+
+<span class="c-com">## Qualification Philosophy</span>
+Weight engagement depth above firmographic fit.
+Company size is misleading — our best customers have historically been
+companies that looked "too small" on paper but had specific intent signals.
+Intent beats fit in our market.
+
+<span class="c-com">## Signal Weighting</span>
+Content engagement:    0.40
+Feature exploration:   0.30
+Firmographic match:    0.15
+Timing signals:        0.15</pre>
+
+<p>These two agents were once the same agent. Their seed population was identical. Their task description was identical. After 50 generations against their respective ground truth conversion data, they have diverged into genuinely different qualification philosophies. And both are correct — each is correctly adapted to the conversion patterns of its specific environment.</p>
+
+<p>If you swap the agents between the two businesses, both perform worse. The SaaS-A agent undervalues the intent signals that predict conversion at SaaS-B. The SaaS-B agent chases deep-engagement leads that never close at SaaS-A because the engagement isn't backed by firmographic fit. <strong>Neither agent is a better qualifier than the other. Each is better at its own environment.</strong></p>
+
+<h3>Environments within a business: speciation</h3>
+
+<p>The island analogy has a second edge that matters even more for a single business. Most businesses do not have one environment. They have several, and they are often incompatible.</p>
+
+<p>A company running a single content agent across both a cold prospecting audience and a retargeting audience is trying to serve two environments with one agent. These are genuinely different environments. The creative that wins against a cold audience — pattern interrupt, bold claim, zero assumed knowledge — will actively fail in retargeting, because the audience has already seen it and did not convert. The retargeting audience rewards specificity and objection handling. The cold audience punishes both.</p>
+
+<p>Run one population against both environments and you will converge on a <strong>bland midpoint</strong> — an agent that is acceptable in both audiences but excellent in neither. The composite fitness score looks acceptable. But the best individual in a mixed-environment population scores 5/10 on each audience, where a specialist would score 8/10 on its target. You have optimised for the composite and lost the peaks.</p>
+
+<p>The solution is the same as the ecological one: <strong>speciation</strong>. Maintain separate populations for each incompatible environment. Let each evolve against its own fitness signal. Periodically run a diagnostic crossover between the champions to check whether the environments are really incompatible or whether you have speciated prematurely. If the offspring outperforms both parents, merge back. If it underperforms both, keep them separate. This mirrors exactly what happens in biology when two populations of the same species become isolated on different islands — given enough time and environmental difference, they diverge into species that can no longer productively interbreed.</p>
+
+<div class="insight">
+  <div class="label">The reframe</div>
+  <p>You are not running one evolution. You are running one evolution <em>per environment</em>. The right unit of optimisation is the (agent, environment) pair — not the agent alone. This is the structural decision most people get wrong when they first build systems like this. They run a single population against a composite fitness function and wonder why the champion never reaches the performance that specialists could. The answer is always environmental heterogeneity.</p>
+</div>
+
+<p>The practical test is simple. Look at the variance of your panel or evaluation scores across your evolved champion. If the variance is high — the champion scores 8/10 in some conditions and 3/10 in others — you have a heterogeneous environment and you should speciate. If the variance is low across all conditions, your environment is genuinely homogeneous and a single population is correct. Most real businesses sit in the first category, and most first attempts at evolutionary agent systems fail to recognise it.</p>
+
+<p>The same logic applies across tasks within a business. A negotiation agent evolved against your supplier base will not transfer cleanly to a different supplier base. A support triage agent evolved against your ticket distribution will not transfer to an operation with different product failure modes. The specificity is not a limitation — it is the point. You are not evolving for agents in the abstract. You are evolving for <em>your</em> island.</p>
 
 <h2>When the island changes: the case for forgetting</h2>
 
