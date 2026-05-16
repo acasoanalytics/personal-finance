@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merton Share Calculator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Gotham', 'Segoe UI', Arial, sans-serif;
+    background: #F5F5F5;
+    color: #222;
+    padding: 1.5rem 1rem;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { color: #416BA9; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .sub { font-size: 12px; color: #666; margin-bottom: 1.2rem; }
+
+  .panel {
+    background: white;
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 1rem;
+  }
+  .section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #416BA9;
+    margin-bottom: 0.9rem;
+  }
+
+  /* Controls */
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem 1.2rem;
+  }
+  .ctl { display: flex; flex-direction: column; gap: 4px; }
+  .ctl label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #416BA9;
+  }
+  .ctl input[type=range] { width: 100%; accent-color: #416BA9; }
+  .ctl .val { font-size: 13px; color: #222; font-weight: 600; }
+  .ctl .hint { font-size: 10px; color: #888; font-style: italic; line-height: 1.4; }
+
+  /* Preset buttons */
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 1rem; }
+  .preset-btn {
+    background: transparent;
+    color: #416BA9;
+    border: 1.5px solid #416BA9;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .preset-btn:hover { background: #416BA9; color: white; }
+
+  /* Result hero */
+  .hero-row {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 800px) { .hero-row { grid-template-columns: 1fr; } }
+
+  .hero-result {
+    background: #416BA9;
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem 1.7rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .hero-result .lbl {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+  .hero-result .merton-num {
+    font-size: 60px;
+    font-weight: 700;
+    line-height: 1.05;
+    margin: 4px 0 2px;
+    letter-spacing: -0.02em;
+  }
+  .hero-result .formula {
+    font-size: 12px;
+    opacity: 0.85;
+    font-family: 'Cambria Math', 'Georgia', serif;
+    margin-top: 6px;
+  }
+  .hero-result .split-bar {
+    display: flex;
+    height: 28px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-top: 14px;
+    background: rgba(255,255,255,0.15);
+  }
+  .hero-result .split-bar .risky {
+    background: #FEB0C0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #222;
+    transition: width 0.2s;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .hero-result .split-bar .safe {
+    background: #9FCFCA;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: #222;
+    transition: width 0.2s;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .hero-result .split-bar .lev {
+    background: #B14FC5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: white;
+    transition: width 0.2s;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .hero-result .interp {
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin-top: 12px;
+    opacity: 0.95;
+  }
+
+  /* Stats grid */
+  .stats-grid {
+    background: white;
+    border-radius: 12px;
+    padding: 1.3rem 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.6rem 1.2rem;
+    align-content: start;
+  }
+  .stat-row { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 0; border-bottom: 1px dotted #eee; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-lbl { font-size: 11px; color: #666; }
+  .stat-val { font-size: 14px; font-weight: 700; color: #222; font-feature-settings: "tnum"; }
+  .stat-val.accent { color: #416BA9; }
+  .stat-val.warn { color: #B14FC5; }
+
+  /* Plot panel */
+  .plot-title { font-size: 14px; font-weight: 700; color: #416BA9; margin-bottom: 10px; }
+  svg { width: 100%; height: auto; display: block; }
+  .plots { display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem; }
+  @media (max-width: 900px) { .plots { grid-template-columns: 1fr; } }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 11px; color: #555; margin-top: 8px; }
+  .legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+
+  /* Sensitivity table */
+  .sens-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+  .sens-card {
+    background: #F5F5F5;
+    border-radius: 8px;
+    padding: 12px 14px;
+    border-left: 3px solid #416BA9;
+  }
+  .sens-card .lbl {
+    font-size: 10px;
+    font-weight: 700;
+    color: #416BA9;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+  .sens-card .v-row { display: flex; justify-content: space-between; font-size: 11px; padding: 2px 0; }
+  .sens-card .v-row .label { color: #666; }
+  .sens-card .v-row .value { font-weight: 700; color: #222; font-feature-settings: "tnum"; }
+  .sens-card .v-row.current { background: #E8EEF6; padding: 3px 6px; margin: 1px -6px; border-radius: 3px; }
+  .sens-card .v-row.current .value { color: #416BA9; }
+
+  /* Explainer */
+  .explainer p {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  .explainer p:last-child { margin-bottom: 0; }
+  .explainer strong { font-weight: 700; color: #416BA9; }
+  .explainer em { font-style: italic; color: #555; }
+  .formula-block {
+    background: #F5F5F5;
+    border-left: 3px solid #B14FC5;
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 12px 0;
+    font-family: 'Cambria Math', 'Georgia', serif;
+    font-size: 15px;
+    color: #222;
+    text-align: center;
+    line-height: 1.5;
+  }
+  .formula-block .sub { display: block; font-family: 'Gotham', 'Segoe UI', sans-serif; font-size: 11px; color: #666; margin-top: 6px; }
+
+  .gamma-guide {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .gamma-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .gamma-card .head { font-size: 11px; font-weight: 700; color: #416BA9; margin-bottom: 3px; }
+  .gamma-card .desc { font-size: 11px; color: #555; line-height: 1.5; }
+
+  .caveat {
+    background: #FFF9ED;
+    border-left: 3px solid #E5A820;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: #333;
+    line-height: 1.65;
+  }
+  .caveat strong { color: #B07D10; font-weight: 700; }
+
+  @media (max-width: 640px) {
+    body { padding: 1rem 0.75rem; }
+    .panel { padding: 1rem 1.1rem; }
+    .hero-result { padding: 1.2rem 1.3rem; }
+    .hero-result .merton-num { font-size: 46px; }
+    h1 { font-size: 19px; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .dist-stats { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* Distribution stats block */
+  .dist-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .dist-stat {
+    background: #F5F5F5;
+    border-radius: 8px;
+    padding: 10px 12px;
+    text-align: center;
+    border-top: 3px solid #416BA9;
+  }
+  .dist-stat.rf { border-top-color: #9FCFCA; }
+  .dist-stat.med { border-top-color: #B14FC5; }
+  .dist-stat .lbl {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #666;
+    margin-bottom: 4px;
+    line-height: 1.2;
+  }
+  .dist-stat .v {
+    font-size: 18px;
+    font-weight: 700;
+    color: #222;
+    font-feature-settings: "tnum";
+    line-height: 1.1;
+  }
+  .dist-stat .sub {
+    font-size: 9px;
+    color: #888;
+    margin-top: 2px;
+    line-height: 1.2;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Merton Share Calculator</h1>
+  <p class="sub">Optimal allocation between a risky asset and a risk-free asset under CRRA utility · w* = (μ − r) / (γ · σ²)</p>
+
+  <!-- INPUTS -->
+  <div class="panel">
+    <div class="section-title">Inputs</div>
+    <div class="controls">
+      <div class="ctl">
+        <label>Expected return (μ)</label>
+        <input id="mu" type="range" min="0" max="20" step="0.1" value="7">
+        <span class="val"><span id="muVal">7.0</span>%</span>
+        <span class="hint">Annualised expected return of the risky asset</span>
+      </div>
+      <div class="ctl">
+        <label>Risk-free rate (r)</label>
+        <input id="rf" type="range" min="0" max="10" step="0.1" value="4">
+        <span class="val"><span id="rfVal">4.0</span>%</span>
+        <span class="hint">Return on cash / T-bills</span>
+      </div>
+      <div class="ctl">
+        <label>Volatility (σ)</label>
+        <input id="sigma" type="range" min="2" max="40" step="0.5" value="16">
+        <span class="val"><span id="sigmaVal">16.0</span>%</span>
+        <span class="hint">Annualised standard deviation of risky returns</span>
+      </div>
+      <div class="ctl">
+        <label>Risk aversion (γ)</label>
+        <input id="gamma" type="range" min="0.5" max="10" step="0.1" value="3">
+        <span class="val">γ = <span id="gammaVal">3.0</span></span>
+        <span class="hint">CRRA coefficient — higher means more conservative</span>
+      </div>
+    </div>
+    <div class="presets">
+      <button class="preset-btn" onclick="applyPreset('historical')">Historical US equity</button>
+      <button class="preset-btn" onclick="applyPreset('current')">Current rates (2026)</button>
+      <button class="preset-btn" onclick="applyPreset('conservative')">Conservative investor</button>
+      <button class="preset-btn" onclick="applyPreset('aggressive')">Aggressive investor</button>
+      <button class="preset-btn" onclick="applyPreset('lowprem')">Low risk premium</button>
+    </div>
+  </div>
+
+  <!-- HERO RESULT + STATS -->
+  <div class="hero-row">
+    <div class="hero-result">
+      <div class="lbl">Optimal share in risky asset</div>
+      <div class="merton-num" id="mertonShare">75%</div>
+      <div class="formula">w* = (μ − r) / (γ · σ²) = (<span id="fEx">0.030</span>) / (<span id="fDen">0.077</span>)</div>
+      <div class="split-bar" id="splitBar"></div>
+      <div class="interp" id="interpretation"></div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-row"><span class="stat-lbl">Excess return (μ − r)</span><span class="stat-val accent" id="stExcess">3.0%</span></div>
+      <div class="stat-row"><span class="stat-lbl">Variance (σ²)</span><span class="stat-val" id="stVar">0.0256</span></div>
+      <div class="stat-row"><span class="stat-lbl">Sharpe ratio</span><span class="stat-val accent" id="stSharpe">0.19</span></div>
+      <div class="stat-row"><span class="stat-lbl">Kelly fraction (γ = 1)</span><span class="stat-val" id="stKelly">117%</span></div>
+      <div class="stat-row"><span class="stat-lbl">Portfolio expected return</span><span class="stat-val" id="stPortRet">5.3%</span></div>
+      <div class="stat-row"><span class="stat-lbl">Portfolio volatility</span><span class="stat-val" id="stPortVol">6.2%</span></div>
+      <div class="stat-row"><span class="stat-lbl">CE excess return</span><span class="stat-val accent" id="stCEx">0.6%</span></div>
+      <div class="stat-row"><span class="stat-lbl">Certainty-equivalent rate</span><span class="stat-val warn" id="stCE">4.6%</span></div>
+    </div>
+  </div>
+
+  <!-- PLOTS -->
+  <div class="plots">
+    <div class="panel">
+      <div class="plot-title">Certainty-equivalent return vs allocation</div>
+      <svg id="ceChart" viewBox="0 0 600 380" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:#416BA9;"></span>CE return curve</span>
+        <span><span class="sw" style="background:#B14FC5;"></span>Optimal allocation w*</span>
+        <span><span class="sw" style="background:#9FCFCA;"></span>Risk-free baseline</span>
+        <span><span class="sw" style="background:#FEB0C0;"></span>Leverage zone (w > 1)</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="plot-title">Outcome distribution at 10 years</div>
+      <svg id="distChart" viewBox="0 0 500 320" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="dist-stats" id="distStats"></div>
+      <p style="font-size:11px;color:#888;margin-top:10px;font-style:italic;">Terminal wealth from £100 invested for 10 years. Blue distribution = Merton-optimal allocation. Teal line = 100% risk-free outcome.</p>
+    </div>
+  </div>
+
+  <!-- SENSITIVITY -->
+  <div class="panel">
+    <div class="section-title">Sensitivity — how w* changes if you adjust one input</div>
+    <div class="sens-grid" id="sensGrid"></div>
+  </div>
+
+  <!-- EXPLAINER -->
+  <div class="panel explainer">
+    <div class="section-title">The formula, the intuition, and the caveats</div>
+
+    <p>Robert Merton's 1969 result gives a closed-form answer to one of the oldest questions in finance: <strong>how much of your wealth should be in risky assets versus cash?</strong> The answer is surprisingly compact:</p>
+
+    <div class="formula-block">
+      w* = (μ − r) / (γ · σ²)
+      <span class="sub">where w* is the optimal fraction in the risky asset, μ is its expected return, r is the risk-free rate, σ is its volatility, and γ is the investor's coefficient of relative risk aversion.</span>
+    </div>
+
+    <p>The intuition is clean. The numerator <strong>(μ − r)</strong> is the reward — how much extra return you get for taking risk. The denominator <strong>γ · σ²</strong> is the cost — variance is what hurts you, scaled by how much you personally dislike that hurt. Allocate more when the reward is large, less when variance or your aversion to it is large. Everything else in finance theory descends from this trade-off.</p>
+
+    <p>A useful reformulation: <strong>w* = SR / (γ · σ)</strong>, where SR is the Sharpe ratio. This makes a point worth absorbing — <em>two assets with the same Sharpe ratio get the same dollar allocation regardless of their volatility</em>, because in the Merton framework you scale your exposure to match your appetite, not the asset's own riskiness. Volatility only matters as a scaling factor for how much capital you commit.</p>
+
+    <p>The certainty-equivalent return at the optimum has its own elegant form: <strong>CE* = r + SR² / (2γ)</strong>. The excess CE over the risk-free rate scales with the <em>square</em> of the Sharpe ratio — doubling the Sharpe quadruples the value you extract — and inversely with risk aversion. A modest improvement in Sharpe is worth more than a modest reduction in volatility at the same Sharpe.</p>
+
+    <p><strong>What γ actually is.</strong> The coefficient of relative risk aversion is the elasticity of marginal utility with respect to wealth. It's not a number you can observe directly — it has to be calibrated to behaviour. Some rough anchors:</p>
+
+    <div class="gamma-guide">
+      <div class="gamma-card"><div class="head">γ = 1 (log utility)</div><div class="desc">The Kelly criterion. Maximises geometric growth rate. Often considered too aggressive for real investors — it tolerates very deep drawdowns.</div></div>
+      <div class="gamma-card"><div class="head">γ = 2–4</div><div class="desc">Typical range inferred from real portfolio choices, surveys, and macro asset-pricing models. γ = 3 roughly fits a 60/40 portfolio at historical parameters.</div></div>
+      <div class="gamma-card"><div class="head">γ = 5–10</div><div class="desc">Conservative or wealthy investors prioritising capital preservation. Used in retirement glide-paths and endowment frameworks.</div></div>
+      <div class="gamma-card"><div class="head">γ > 10</div><div class="desc">Pathologically risk-averse in pure theory, though sometimes needed to fit observed equity premium puzzles. Suggests something other than CRRA is going on.</div></div>
+    </div>
+
+    <p style="margin-top:14px;"><strong>Leverage and short positions.</strong> The formula doesn't impose w ∈ [0, 1]. With a high Sharpe ratio and low γ, the optimal allocation can exceed 100% — meaning borrow at r to invest more than your wealth in the risky asset. With negative excess return, optimal w is negative — short the risky asset. Real-world borrowing is rarely at the risk-free rate, and shorting carries costs and risks the formula doesn't capture, so treat extreme allocations as theoretical upper bounds rather than literal prescriptions.</p>
+
+    <div class="caveat">
+      <strong>Five reasons to take the answer with a grain of salt:</strong>
+      <ol style="margin-left:18px;margin-top:6px;line-height:1.7;">
+        <li><strong>Parameter uncertainty.</strong> μ in particular is estimated with huge error. A standard error of 2% on expected equity returns is normal; that propagates to massive uncertainty in w*. The formula gives a point estimate as if you knew the inputs precisely; you don't.</li>
+        <li><strong>Single-period vs continuous.</strong> Merton's result assumes continuous trading with no costs. In practice, transaction costs and rebalancing frictions eat into the theoretical optimum.</li>
+        <li><strong>No regime change.</strong> The formula assumes constant μ, r, σ. Volatility clusters, returns mean-revert, and risk premia move. Dynamic strategies that respond to these can outperform the static Merton share.</li>
+        <li><strong>One risky asset.</strong> Real portfolios have many. The multi-asset version replaces σ² with a covariance matrix and (μ − r) with a vector — same structure, but diversification effects matter.</li>
+        <li><strong>CRRA is a model.</strong> Real preferences include loss aversion, habit formation, and aspiration levels that CRRA doesn't capture. The Merton share is the answer to a clean question, not necessarily the answer to your question.</li>
+      </ol>
+    </div>
+
+    <p style="margin-top:14px;">Despite all this, the formula is the right starting point. It tells you what you'd do if you knew the world, gives you a benchmark to deviate from with reason rather than instinct, and forces every input to be made explicit. The instinct to "go 100% in stocks because they go up over time" is the instinct to set γ = 1 and ignore parameter uncertainty. The instinct to hold 100% cash is the instinct to set γ = ∞. Merton's formula doesn't tell you what γ to use — but it forces you to admit you're using one.</p>
+  </div>
+</div>
+
+<script>
+// ---------- State ----------
+const state = {
+  mu: 0.07,
+  rf: 0.04,
+  sigma: 0.16,
+  gamma: 3.0
+};
+
+// ---------- Helpers ----------
+function fmtPct(v, digits = 1) { return (v * 100).toFixed(digits) + '%'; }
+function fmtNum(v, digits = 4) { return v.toFixed(digits); }
+
+function mertonShare(mu, rf, sigma, gamma) {
+  return (mu - rf) / (gamma * sigma * sigma);
+}
+
+// Annualised CE growth rate for CRRA in continuous time (lognormal)
+function ceRate(w, mu, rf, sigma, gamma) {
+  return rf + w * (mu - rf) - 0.5 * gamma * w * w * sigma * sigma;
+}
+
+// Lognormal pdf
+function lognormPdf(x, mu, sigma) {
+  if (x <= 0) return 0;
+  return (1 / (x * sigma * Math.sqrt(2 * Math.PI))) *
+         Math.exp(-Math.pow(Math.log(x) - mu, 2) / (2 * sigma * sigma));
+}
+
+// ---------- Update ----------
+function recompute() {
+  const { mu, rf, sigma, gamma } = state;
+  const w = mertonShare(mu, rf, sigma, gamma);
+  const excess = mu - rf;
+  const variance = sigma * sigma;
+  const sharpe = excess / sigma;
+  const kelly = excess / variance;  // gamma=1
+  const portRet = rf + w * excess;
+  const portVol = Math.abs(w) * sigma;
+  const ce = ceRate(w, mu, rf, sigma, gamma);
+  const ceExcess = ce - rf;
+
+  // Hero numbers
+  document.getElementById('mertonShare').textContent = (w * 100).toFixed(0) + '%';
+  document.getElementById('fEx').textContent = excess.toFixed(3);
+  document.getElementById('fDen').textContent = (gamma * variance).toFixed(3);
+
+  // Split bar
+  renderSplitBar(w);
+
+  // Interpretation
+  document.getElementById('interpretation').textContent = interpretShare(w);
+
+  // Stats
+  document.getElementById('stExcess').textContent = fmtPct(excess);
+  document.getElementById('stVar').textContent = fmtNum(variance);
+  document.getElementById('stSharpe').textContent = sharpe.toFixed(2);
+  document.getElementById('stKelly').textContent = (kelly * 100).toFixed(0) + '%';
+  document.getElementById('stPortRet').textContent = fmtPct(portRet);
+  document.getElementById('stPortVol').textContent = fmtPct(portVol);
+  document.getElementById('stCEx').textContent = fmtPct(ceExcess, 2);
+  document.getElementById('stCE').textContent = fmtPct(ce);
+
+  drawCEChart(w);
+  drawDistChart(w);
+  renderSensitivity();
+}
+
+function renderSplitBar(w) {
+  const bar = document.getElementById('splitBar');
+  if (w < 0) {
+    // Short position
+    const shortPct = Math.min(Math.abs(w), 1) * 100;
+    const safePct = 100 - shortPct;
+    bar.innerHTML = `
+      <div class="lev" style="width:${shortPct}%;">Short ${shortPct.toFixed(0)}%</div>
+      <div class="safe" style="width:${safePct}%;">Cash ${(100 + Math.abs(w)*100).toFixed(0)}%</div>
+    `;
+  } else if (w <= 1) {
+    const riskyPct = w * 100;
+    const safePct = (1 - w) * 100;
+    bar.innerHTML = `
+      <div class="risky" style="width:${riskyPct}%;">Risky ${riskyPct.toFixed(0)}%</div>
+      <div class="safe" style="width:${safePct}%;">Cash ${safePct.toFixed(0)}%</div>
+    `;
+  } else {
+    // Leveraged - normalise to total exposure
+    const total = w * 100;
+    const baseW = (100 / total) * 100;
+    const levW = ((total - 100) / total) * 100;
+    bar.innerHTML = `
+      <div class="risky" style="width:${baseW}%;">Risky 100%</div>
+      <div class="lev" style="width:${levW}%;">+ Leverage ${(total - 100).toFixed(0)}%</div>
+    `;
+  }
+}
+
+function interpretShare(w) {
+  const pct = w * 100;
+  if (w < 0) {
+    return `Optimal is to short the risky asset by ${Math.abs(pct).toFixed(0)}% and hold ${(100 + Math.abs(pct)).toFixed(0)}% in cash. Excess return is negative — the risky asset doesn't compensate you for its risk at this γ.`;
+  } else if (w < 0.3) {
+    return `A conservative allocation. Most wealth sits in the risk-free asset. Either the risk premium is thin, volatility is high, or risk aversion is significant.`;
+  } else if (w <= 1.0) {
+    return `An unlevered allocation: ${pct.toFixed(0)}% in the risky asset, ${(100-pct).toFixed(0)}% in cash. This is the standard 60/40-style territory where Merton's framework typically lands at common parameters.`;
+  } else if (w <= 2.0) {
+    return `Optimal involves leverage of ${(pct-100).toFixed(0)}% — borrow at the risk-free rate to invest ${pct.toFixed(0)}% in the risky asset. Theoretically clean, practically constrained by real borrowing costs and margin limits.`;
+  } else {
+    return `Heavy leverage indicated (${pct.toFixed(0)}%). The formula is telling you the reward-to-risk ratio is exceptional at this γ — but treat as theoretical: real-world borrowing costs and tail risk break the assumptions at these levels.`;
+  }
+}
+
+// ---------- CE Chart ----------
+function drawCEChart(wStar) {
+  const svg = document.getElementById('ceChart');
+  const W = 600, H = 380;
+  const margin = { top: 20, right: 25, bottom: 50, left: 60 };
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  // X range: -50% to max(200%, 1.5 * w*)
+  const xMax = Math.max(2.0, wStar * 1.6, 1.5);
+  const xMin = wStar < 0 ? Math.min(-0.5, wStar * 1.5) : -0.5;
+
+  // Compute curve
+  const points = [];
+  for (let w = xMin; w <= xMax + 0.001; w += (xMax - xMin) / 200) {
+    points.push({ w, ce: ceRate(w, state.mu, state.rf, state.sigma, state.gamma) });
+  }
+  const ceVals = points.map(p => p.ce);
+  const yMaxRaw = Math.max(...ceVals);
+  const yMinRaw = Math.min(...ceVals, state.rf - 0.02);
+  const ySpan = yMaxRaw - yMinRaw;
+  const yMax = yMaxRaw + ySpan * 0.1;
+  const yMin = yMinRaw - ySpan * 0.1;
+
+  const xs = x => margin.left + (x - xMin) / (xMax - xMin) * iw;
+  const ys = y => margin.top + ih - (y - yMin) / (yMax - yMin) * ih;
+
+  let html = '';
+
+  // Leverage zone shading (w > 1)
+  if (xMax > 1) {
+    html += `<rect x="${xs(1)}" y="${margin.top}" width="${xs(xMax) - xs(1)}" height="${ih}" fill="#FEB0C0" fill-opacity="0.13"/>`;
+  }
+  // Short zone shading (w < 0)
+  if (xMin < 0) {
+    html += `<rect x="${xs(xMin)}" y="${margin.top}" width="${xs(0) - xs(xMin)}" height="${ih}" fill="#BBBBBB" fill-opacity="0.13"/>`;
+  }
+
+  // Axes
+  html += `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top+ih}" stroke="#222"/>`;
+  html += `<line x1="${margin.left}" y1="${margin.top+ih}" x2="${margin.left+iw}" y2="${margin.top+ih}" stroke="#222"/>`;
+
+  // X ticks
+  const xTickStep = xMax > 3 ? 1 : (xMax > 1.5 ? 0.5 : 0.25);
+  for (let t = Math.ceil(xMin / xTickStep) * xTickStep; t <= xMax + 0.001; t += xTickStep) {
+    const x = xs(t);
+    html += `<line x1="${x}" y1="${margin.top+ih}" x2="${x}" y2="${margin.top+ih+5}" stroke="#222"/>`;
+    html += `<text x="${x}" y="${margin.top+ih+18}" text-anchor="middle" font-size="10" fill="#666">${(t*100).toFixed(0)}%</text>`;
+  }
+  // Y ticks
+  const yTickStep = ySpan > 0.1 ? 0.02 : 0.01;
+  for (let t = Math.ceil(yMin / yTickStep) * yTickStep; t <= yMax + 0.0001; t += yTickStep) {
+    const y = ys(t);
+    html += `<line x1="${margin.left-5}" y1="${y}" x2="${margin.left}" y2="${y}" stroke="#222"/>`;
+    html += `<text x="${margin.left-8}" y="${y+3}" text-anchor="end" font-size="10" fill="#666">${(t*100).toFixed(1)}%</text>`;
+    html += `<line x1="${margin.left}" y1="${y}" x2="${margin.left+iw}" y2="${y}" stroke="#eee" stroke-width="0.5"/>`;
+  }
+
+  // Risk-free baseline
+  html += `<line x1="${margin.left}" y1="${ys(state.rf)}" x2="${margin.left+iw}" y2="${ys(state.rf)}" stroke="#9FCFCA" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  html += `<text x="${margin.left+iw-4}" y="${ys(state.rf)-4}" text-anchor="end" font-size="10" fill="#2A8A84" font-weight="700">r = ${(state.rf*100).toFixed(1)}%</text>`;
+
+  // CE curve
+  const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xs(p.w).toFixed(1)} ${ys(p.ce).toFixed(1)}`).join(' ');
+  html += `<path d="${pathD}" fill="none" stroke="#416BA9" stroke-width="2.5"/>`;
+
+  // w=0 reference line
+  if (xMin <= 0) {
+    html += `<line x1="${xs(0)}" y1="${margin.top}" x2="${xs(0)}" y2="${margin.top+ih}" stroke="#BBBBBB" stroke-width="1" stroke-dasharray="2,2"/>`;
+  }
+  // w=1 reference line (100%)
+  if (xMax >= 1) {
+    html += `<line x1="${xs(1)}" y1="${margin.top}" x2="${xs(1)}" y2="${margin.top+ih}" stroke="#BBBBBB" stroke-width="1" stroke-dasharray="2,2"/>`;
+  }
+
+  // Optimum marker
+  if (wStar >= xMin && wStar <= xMax) {
+    const ceMax = ceRate(wStar, state.mu, state.rf, state.sigma, state.gamma);
+    const ox = xs(wStar);
+    const oy = ys(ceMax);
+    html += `<line x1="${ox}" y1="${margin.top}" x2="${ox}" y2="${margin.top+ih}" stroke="#B14FC5" stroke-width="1.5" stroke-dasharray="5,3"/>`;
+    html += `<circle cx="${ox}" cy="${oy}" r="6" fill="#B14FC5" stroke="white" stroke-width="2"/>`;
+    // Label box
+    const labelText = `w* = ${(wStar*100).toFixed(0)}%`;
+    const labelX = wStar > (xMin + xMax)/2 ? ox - 8 : ox + 8;
+    const anchor = wStar > (xMin + xMax)/2 ? 'end' : 'start';
+    html += `<text x="${labelX}" y="${oy - 12}" text-anchor="${anchor}" font-size="11" font-weight="700" fill="#B14FC5">${labelText}</text>`;
+    html += `<text x="${labelX}" y="${oy + 2}" text-anchor="${anchor}" font-size="10" fill="#B14FC5">CE = ${(ceMax*100).toFixed(2)}%</text>`;
+  }
+
+  // Axis labels
+  html += `<text x="${margin.left+iw/2}" y="${H-10}" text-anchor="middle" font-size="12" font-weight="700" fill="#222">Allocation to risky asset (w)</text>`;
+  html += `<text x="15" y="${margin.top+ih/2}" text-anchor="middle" font-size="12" font-weight="700" fill="#222" transform="rotate(-90, 15, ${margin.top+ih/2})">Certainty-equivalent rate</text>`;
+
+  svg.innerHTML = html;
+}
+
+// ---------- Outcome distribution ----------
+function drawDistChart(wStar) {
+  const svg = document.getElementById('distChart');
+  const statsEl = document.getElementById('distStats');
+  const W = 500, H = 320;
+  const margin = { top: 30, right: 25, bottom: 55, left: 55 };
+  const iw = W - margin.left - margin.right;
+  const ih = H - margin.top - margin.bottom;
+
+  const T = 10;
+  const { mu, rf, sigma, gamma } = state;
+
+  // Merton portfolio drift (geometric) and vol over T years
+  // d log W = (r + w(mu-r) - 0.5 w^2 sigma^2) dt + w sigma dB
+  const muM = (rf + wStar * (mu - rf) - 0.5 * wStar * wStar * sigma * sigma) * T;
+  const sigM = Math.abs(wStar) * sigma * Math.sqrt(T);
+  // Risk-free terminal
+  const W0 = 100;
+  const rfTerm = W0 * Math.exp(rf * T);
+  const median = sigM > 0.001 ? Math.exp(Math.log(W0) + muM) : W0;
+  const p10 = sigM > 0.001 ? Math.exp(Math.log(W0) + muM - 1.2816 * sigM) : W0;
+  const p90 = sigM > 0.001 ? Math.exp(Math.log(W0) + muM + 1.2816 * sigM) : W0;
+
+  // Distribution range
+  let xMin, xMax;
+  const expMu = Math.log(W0) + muM;
+  if (sigM > 0.001) {
+    const lo = Math.exp(expMu - 3 * sigM);
+    const hi = Math.exp(expMu + 3 * sigM);
+    xMin = Math.max(0, lo * 0.7);
+    xMax = hi * 1.05;
+  } else {
+    xMin = W0 * 0.5;
+    xMax = rfTerm * 1.5;
+  }
+  // Ensure risk-free fits in view
+  xMax = Math.max(xMax, rfTerm * 1.1);
+  xMin = Math.min(xMin, rfTerm * 0.9);
+
+  // Sample density points
+  const N = 150;
+  const points = [];
+  let yMax = 0;
+  for (let i = 0; i <= N; i++) {
+    const x = xMin + (xMax - xMin) * i / N;
+    const pdfM = sigM > 0.001 ? lognormPdf(x, expMu, sigM) : 0;
+    points.push({ x, pdfM });
+    if (pdfM > yMax) yMax = pdfM;
+  }
+  yMax *= 1.2;
+
+  const xs = x => margin.left + (x - xMin) / (xMax - xMin) * iw;
+  const ys = y => margin.top + ih - (y / yMax) * ih;
+
+  let html = '';
+
+  // Axes
+  html += `<line x1="${margin.left}" y1="${margin.top}" x2="${margin.left}" y2="${margin.top+ih}" stroke="#222"/>`;
+  html += `<line x1="${margin.left}" y1="${margin.top+ih}" x2="${margin.left+iw}" y2="${margin.top+ih}" stroke="#222"/>`;
+
+  // X ticks (5 ticks, generously spaced for mobile)
+  const xTicks = 5;
+  for (let i = 0; i <= xTicks; i++) {
+    const v = xMin + (xMax - xMin) * i / xTicks;
+    const x = xs(v);
+    html += `<line x1="${x}" y1="${margin.top+ih}" x2="${x}" y2="${margin.top+ih+5}" stroke="#222"/>`;
+    html += `<text x="${x}" y="${margin.top+ih+20}" text-anchor="middle" font-size="13" fill="#666">£${v.toFixed(0)}</text>`;
+  }
+
+  // Distribution area (Merton)
+  if (sigM > 0.001) {
+    let pathD = `M ${xs(xMin)} ${ys(0)}`;
+    points.forEach(p => {
+      pathD += ` L ${xs(p.x).toFixed(1)} ${ys(p.pdfM).toFixed(1)}`;
+    });
+    pathD += ` L ${xs(xMax)} ${ys(0)} Z`;
+    html += `<path d="${pathD}" fill="#416BA9" fill-opacity="0.22" stroke="#416BA9" stroke-width="2"/>`;
+
+    // Shade P10-P90 region a touch darker
+    let shadeD = `M ${xs(p10)} ${ys(0)}`;
+    points.filter(p => p.x >= p10 && p.x <= p90).forEach(p => {
+      shadeD += ` L ${xs(p.x).toFixed(1)} ${ys(p.pdfM).toFixed(1)}`;
+    });
+    shadeD += ` L ${xs(p90)} ${ys(0)} Z`;
+    html += `<path d="${shadeD}" fill="#416BA9" fill-opacity="0.15"/>`;
+
+    // Median line — single in-chart label
+    const medY = ys(lognormPdf(median, expMu, sigM));
+    html += `<line x1="${xs(median)}" y1="${ys(0)}" x2="${xs(median)}" y2="${medY}" stroke="#B14FC5" stroke-width="2.5"/>`;
+    html += `<circle cx="${xs(median)}" cy="${medY}" r="4" fill="#B14FC5" stroke="white" stroke-width="1.5"/>`;
+    html += `<text x="${xs(median)}" y="${medY - 10}" text-anchor="middle" font-size="13" fill="#B14FC5" font-weight="700">Median</text>`;
+  }
+
+  // Risk-free vertical line — clear, single label
+  if (rfTerm >= xMin && rfTerm <= xMax) {
+    const rfX = xs(rfTerm);
+    html += `<line x1="${rfX}" y1="${margin.top}" x2="${rfX}" y2="${margin.top+ih}" stroke="#9FCFCA" stroke-width="3"/>`;
+    // Position label to avoid overlap with median label
+    const labelOnLeft = rfTerm < median;
+    const labelX = labelOnLeft ? rfX - 6 : rfX + 6;
+    const anchor = labelOnLeft ? 'end' : 'start';
+    html += `<text x="${labelX}" y="${margin.top + 14}" text-anchor="${anchor}" font-size="13" fill="#2A8A84" font-weight="700">Risk-free</text>`;
+  }
+
+  // Axis labels
+  html += `<text x="${margin.left+iw/2}" y="${H-10}" text-anchor="middle" font-size="13" font-weight="700" fill="#222">Terminal wealth after 10 years</text>`;
+
+  svg.innerHTML = html;
+
+  // Render numbers in the stats block below the chart
+  const probAboveRf = sigM > 0.001
+    ? (1 - normCdf((Math.log(rfTerm) - expMu) / sigM)) * 100
+    : (median > rfTerm ? 100 : 0);
+
+  statsEl.innerHTML = `
+    <div class="dist-stat rf">
+      <div class="lbl">Risk-free</div>
+      <div class="v">£${rfTerm.toFixed(0)}</div>
+      <div class="sub">guaranteed</div>
+    </div>
+    <div class="dist-stat">
+      <div class="lbl">P10 (downside)</div>
+      <div class="v">£${p10.toFixed(0)}</div>
+      <div class="sub">10% chance below</div>
+    </div>
+    <div class="dist-stat med">
+      <div class="lbl">Median</div>
+      <div class="v">£${median.toFixed(0)}</div>
+      <div class="sub">50/50 outcome</div>
+    </div>
+    <div class="dist-stat">
+      <div class="lbl">P90 (upside)</div>
+      <div class="v">£${p90.toFixed(0)}</div>
+      <div class="sub">10% chance above</div>
+    </div>
+  `;
+}
+
+// Standard-normal CDF (reused name to avoid clashing with normCDF above)
+function normCdf(z) {
+  // Abramowitz & Stegun
+  const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741;
+  const a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
+  const sign = z < 0 ? -1 : 1;
+  z = Math.abs(z) / Math.sqrt(2);
+  const t = 1.0 / (1.0 + p * z);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-z * z);
+  return 0.5 * (1.0 + sign * y);
+}
+
+// ---------- Sensitivity ----------
+function renderSensitivity() {
+  const { mu, rf, sigma, gamma } = state;
+  const wCurrent = mertonShare(mu, rf, sigma, gamma);
+
+  const cards = [
+    {
+      label: 'Expected return (μ)',
+      current: mu,
+      variants: [
+        { delta: -0.02, label: '-2%' },
+        { delta: -0.01, label: '-1%' },
+        { delta: 0, label: 'current' },
+        { delta: 0.01, label: '+1%' },
+        { delta: 0.02, label: '+2%' },
+      ],
+      compute: (delta) => mertonShare(mu + delta, rf, sigma, gamma),
+      fmt: (v) => fmtPct(v),
+    },
+    {
+      label: 'Risk-free rate (r)',
+      current: rf,
+      variants: [
+        { delta: -0.02, label: '-2%' },
+        { delta: -0.01, label: '-1%' },
+        { delta: 0, label: 'current' },
+        { delta: 0.01, label: '+1%' },
+        { delta: 0.02, label: '+2%' },
+      ],
+      compute: (delta) => mertonShare(mu, rf + delta, sigma, gamma),
+      fmt: (v) => fmtPct(v),
+    },
+    {
+      label: 'Volatility (σ)',
+      current: sigma,
+      variants: [
+        { mult: 0.75, label: '×0.75' },
+        { mult: 0.9, label: '×0.9' },
+        { mult: 1.0, label: 'current' },
+        { mult: 1.1, label: '×1.1' },
+        { mult: 1.25, label: '×1.25' },
+      ],
+      compute: (v) => mertonShare(mu, rf, sigma * v.mult, gamma),
+      fmt: (v) => fmtPct(v),
+    },
+    {
+      label: 'Risk aversion (γ)',
+      current: gamma,
+      variants: [
+        { val: 1, label: 'γ=1' },
+        { val: 2, label: 'γ=2' },
+        { val: gamma, label: 'current' },
+        { val: 5, label: 'γ=5' },
+        { val: 8, label: 'γ=8' },
+      ],
+      compute: (v) => mertonShare(mu, rf, sigma, v.val),
+      fmt: (v) => fmtPct(v),
+    },
+  ];
+
+  let html = '';
+  cards.forEach(card => {
+    html += `<div class="sens-card"><div class="lbl">${card.label}</div>`;
+    card.variants.forEach(v => {
+      let computed;
+      if (card.label.startsWith('Expected') || card.label.startsWith('Risk-free')) {
+        computed = card.compute(v.delta);
+      } else if (card.label.startsWith('Volatility')) {
+        computed = card.compute(v);
+      } else {
+        computed = card.compute(v);
+      }
+      const isCurrent = v.label === 'current';
+      html += `<div class="v-row ${isCurrent ? 'current' : ''}"><span class="label">${v.label}</span><span class="value">${card.fmt(computed)}</span></div>`;
+    });
+    html += `</div>`;
+  });
+
+  document.getElementById('sensGrid').innerHTML = html;
+}
+
+// ---------- Bindings ----------
+function bindSlider(id, key, scale = 0.01) {
+  const el = document.getElementById(id);
+  const lbl = document.getElementById(id + 'Val');
+  el.addEventListener('input', () => {
+    state[key] = parseFloat(el.value) * scale;
+    lbl.textContent = parseFloat(el.value).toFixed(1);
+    recompute();
+  });
+}
+bindSlider('mu', 'mu', 0.01);
+bindSlider('rf', 'rf', 0.01);
+bindSlider('sigma', 'sigma', 0.01);
+bindSlider('gamma', 'gamma', 1.0); // gamma is just the raw value
+
+// gamma needs slight override
+document.getElementById('gamma').addEventListener('input', (e) => {
+  state.gamma = parseFloat(e.target.value);
+});
+
+// ---------- Presets ----------
+const presets = {
+  historical: { mu: 10, rf: 2, sigma: 20, gamma: 3 },     // Historical US equity premium
+  current:    { mu: 7,  rf: 4, sigma: 16, gamma: 3 },     // 2026-ish
+  conservative: { mu: 7, rf: 4, sigma: 16, gamma: 6 },
+  aggressive: { mu: 7, rf: 4, sigma: 16, gamma: 1.5 },
+  lowprem:    { mu: 5, rf: 4, sigma: 18, gamma: 3 },
+};
+
+function applyPreset(name) {
+  const p = presets[name];
+  document.getElementById('mu').value = p.mu;
+  document.getElementById('muVal').textContent = p.mu.toFixed(1);
+  document.getElementById('rf').value = p.rf;
+  document.getElementById('rfVal').textContent = p.rf.toFixed(1);
+  document.getElementById('sigma').value = p.sigma;
+  document.getElementById('sigmaVal').textContent = p.sigma.toFixed(1);
+  document.getElementById('gamma').value = p.gamma;
+  document.getElementById('gammaVal').textContent = p.gamma.toFixed(1);
+  state.mu = p.mu / 100;
+  state.rf = p.rf / 100;
+  state.sigma = p.sigma / 100;
+  state.gamma = p.gamma;
+  recompute();
+}
+
+// Initial render
+recompute();
+</script>
+</body>
+</html>
