@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>True Cost Calculator</title>
+<style>
+  :root{
+    --blue:#416BA9;
+    --blue-deep:#2f4f7e;
+    --teal:#9FCFCA;
+    --teal-deep:#5a9a92;
+    --purple:#B14FC5;
+    --purple-soft:#f3e3f6;
+    --gray:#BBBBBB;
+    --ink:#222222;
+    --bg:#F5F5F5;
+    --card:#ffffff;
+    --line:#e6e6e6;
+    font-family:'Gotham','Segoe UI',Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    -webkit-font-smoothing:antialiased;line-height:1.45;
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 20px 64px;}
+
+  /* Header */
+  header{margin-bottom:26px;}
+  .eyebrow{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--blue);font-weight:700;margin:0 0 8px;
+  }
+  h1{
+    font-weight:700;font-size:clamp(26px,4.4vw,40px);line-height:1.08;
+    margin:0 0 10px;color:var(--ink);letter-spacing:-.01em;
+  }
+  h1 .pop{color:var(--purple);}
+  .lede{margin:0;max-width:62ch;color:#555;font-size:15.5px;}
+
+  /* Layout */
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:22px;align-items:start;}
+  @media(max-width:880px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:22px;box-shadow:0 1px 2px rgba(20,40,70,.04);
+  }
+  .controls{position:sticky;top:18px;}
+  @media(max-width:880px){.controls{position:static;}}
+
+  .field{margin-bottom:20px;}
+  .field:last-child{margin-bottom:0;}
+  label.cap{
+    display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
+    font-weight:700;color:#6a6a6a;margin-bottom:8px;
+  }
+
+  .money-input{display:flex;align-items:center;border:1.5px solid var(--line);
+    border-radius:10px;overflow:hidden;transition:border-color .15s;}
+  .money-input:focus-within{border-color:var(--blue);}
+  .money-input .prefix{padding:0 12px;color:#888;font-weight:700;background:#fafafa;
+    align-self:stretch;display:flex;align-items:center;border-right:1px solid var(--line);}
+  .money-input input{border:0;outline:0;padding:12px 12px;font-size:18px;width:100%;
+    font-weight:700;color:var(--ink);font-family:inherit;background:transparent;}
+
+  /* Segmented */
+  .seg{display:flex;background:#f0f0f0;border-radius:10px;padding:4px;gap:4px;}
+  .seg button{flex:1;border:0;background:transparent;padding:9px 6px;border-radius:7px;
+    font-family:inherit;font-weight:700;font-size:13px;color:#666;cursor:pointer;
+    transition:all .15s;}
+  .seg button.on{background:var(--blue);color:#fff;box-shadow:0 1px 3px rgba(65,107,169,.4);}
+
+  .freq{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .freq button{border:1.5px solid var(--line);background:#fff;border-radius:8px;
+    padding:7px 11px;font-family:inherit;font-weight:600;font-size:13px;color:#555;
+    cursor:pointer;transition:all .15s;}
+  .freq button.on{border-color:var(--blue);background:#eef2f9;color:var(--blue-deep);}
+  .freq.hide{display:none;}
+
+  .presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+  .presets button{border:1px solid var(--line);background:#fff;border-radius:20px;
+    padding:5px 11px;font-family:inherit;font-weight:600;font-size:12px;color:#666;
+    cursor:pointer;transition:all .15s;}
+  .presets button:hover{border-color:var(--blue);color:var(--blue);}
+  .presets button.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+
+  .slider-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;}
+  .slider-val{font-weight:700;font-size:22px;color:var(--blue-deep);}
+  .slider-val small{font-size:13px;color:#999;font-weight:600;}
+  input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:5px;
+    background:linear-gradient(90deg,var(--blue) 0%,var(--blue) var(--fill,40%),#e2e2e2 var(--fill,40%));outline:none;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;
+    border-radius:50%;background:#fff;border:3px solid var(--blue);cursor:pointer;
+    box-shadow:0 1px 4px rgba(0,0,0,.2);}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;
+    border:3px solid var(--blue);cursor:pointer;}
+
+  .small-num{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;
+    overflow:hidden;}
+  .small-num input{border:0;outline:0;padding:11px 12px;font-size:16px;width:100%;font-weight:700;
+    font-family:inherit;color:var(--ink);background:transparent;}
+  .small-num .suffix{padding:0 12px;color:#888;font-weight:700;background:#fafafa;
+    align-self:stretch;display:flex;align-items:center;border-left:1px solid var(--line);}
+
+  .hint{font-size:12px;color:#999;margin-top:7px;line-height:1.4;}
+
+  /* Results */
+  .hero{
+    background:linear-gradient(135deg,#fbf4fd 0%,#fff 60%);
+    border:1px solid var(--purple-soft);border-radius:14px;padding:24px;margin-bottom:18px;
+    position:relative;overflow:hidden;
+  }
+  .hero .htag{font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+    color:var(--purple);margin-bottom:6px;}
+  .hero .big{font-weight:700;font-size:clamp(38px,8vw,60px);line-height:1;color:var(--purple);
+    letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .hero .sub{margin-top:10px;color:#555;font-size:14.5px;max-width:46ch;}
+  .hero .sub b{color:var(--ink);}
+
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
+  @media(max-width:520px){.stats{grid-template-columns:1fr;}}
+  .stat{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .stat .k{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;
+    color:#888;margin-bottom:7px;display:flex;align-items:center;gap:7px;}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none;}
+  .stat .v{font-weight:700;font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums;
+    line-height:1.05;}
+  .stat .note{font-size:12px;color:#999;margin-top:4px;}
+
+  /* Chart */
+  .chart-card h3{margin:0 0 2px;font-size:16px;font-weight:700;}
+  .chart-card .csub{margin:0 0 14px;font-size:13px;color:#888;}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:6px;font-size:12.5px;font-weight:600;color:#555;}
+  .legend span{display:flex;align-items:center;gap:7px;}
+  .legend i{width:14px;height:3px;border-radius:2px;display:inline-block;}
+  svg{display:block;width:100%;height:auto;overflow:visible;}
+  .readout{font-size:13px;color:#666;margin-top:8px;min-height:20px;font-weight:600;}
+  .readout b{color:var(--ink);}
+
+  /* Ladder */
+  .ladder-card{margin-top:18px;}
+  .ladder-card h3{margin:0 0 14px;font-size:16px;font-weight:700;}
+  .rung{margin-bottom:16px;}
+  .rung:last-child{margin-bottom:0;}
+  .rung .rl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+  .rung .rname{font-weight:700;font-size:14px;}
+  .rung .rname small{font-weight:600;color:#999;font-size:12px;}
+  .rung .rval{font-weight:700;font-size:17px;font-variant-numeric:tabular-nums;}
+  .bar{height:16px;border-radius:8px;background:#f0f0f0;overflow:hidden;}
+  .bar > div{height:100%;border-radius:8px;transition:width .5s cubic-bezier(.2,.7,.2,1);}
+
+  .assumptions{margin-top:18px;font-size:12.5px;color:#888;line-height:1.6;}
+  .assumptions b{color:#666;}
+
+  /* Explainer */
+  .explain{margin-top:18px;}
+  .explain h3{margin:0 0 4px;font-size:16px;font-weight:700;}
+  .explain .intro{margin:0 0 16px;font-size:14px;color:#555;}
+  .explain h4{font-weight:700;font-size:13.5px;margin:16px 0 4px;color:var(--blue-deep);}
+  .explain h4:first-of-type{margin-top:6px;}
+  .explain p{margin:0 0 8px;font-size:13.5px;color:#555;line-height:1.55;}
+  .explain p b{color:var(--ink);}
+  .explain .keyrow{display:flex;gap:10px;align-items:flex-start;margin:0 0 9px;}
+  .explain .keyrow .kdot{width:10px;height:10px;border-radius:50%;flex:none;margin-top:5px;}
+  .explain .keyrow p{margin:0;}
+
+  footer{margin-top:30px;font-size:12px;color:#aaa;text-align:center;}
+
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Spending · Opportunity cost</p>
+    <h1>What that expense <span class="pop">really</span> costs you</h1>
+    <p class="lede">Money you spend is earned after tax and could have been invested instead. This tool grosses an expense back up to the income it took to fund it, then projects what it would have become if invested over your horizon.</p>
+  </header>
+
+  <div class="grid">
+    <!-- CONTROLS -->
+    <div class="card controls">
+      <div class="field">
+        <label class="cap" for="amount">Expense amount</label>
+        <div class="money-input">
+          <span class="prefix">£</span>
+          <input id="amount" type="number" min="0" step="any" value="100" inputmode="decimal">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="cap">Type of expense</label>
+        <div class="seg" id="typeSeg">
+          <button data-type="once">One-off</button>
+          <button data-type="recurring" class="on">Recurring</button>
+        </div>
+        <div class="freq" id="freq">
+          <button data-ppy="365">per day</button>
+          <button data-ppy="52">per week</button>
+          <button data-ppy="12" class="on">per month</button>
+          <button data-ppy="1">per year</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="cap" for="tax">Marginal tax rate</label>
+        <div class="small-num">
+          <input id="tax" type="number" min="0" max="70" step="1" value="40" inputmode="numeric">
+          <span class="suffix">%</span>
+        </div>
+        <div class="presets" id="taxPresets">
+          <button data-tax="20">Basic 20%</button>
+          <button data-tax="40" class="on">Higher 40%</button>
+          <button data-tax="42">Higher+NI 42%</button>
+          <button data-tax="45">Additional 45%</button>
+        </div>
+        <p class="hint">The rate on the last pound you earn. This is what you'd save by not funding the expense from taxed income.</p>
+      </div>
+
+      <div class="field">
+        <label class="cap" for="years">Investment time horizon</label>
+        <div class="slider-row">
+          <span class="slider-val"><span id="yearsVal">20</span> <small>years</small></span>
+        </div>
+        <input id="years" type="range" min="1" max="40" step="1" value="20">
+      </div>
+
+      <div class="field">
+        <label class="cap" for="ret">Expected annual return</label>
+        <div class="small-num">
+          <input id="ret" type="number" min="0" max="20" step="0.5" value="5" inputmode="decimal">
+          <span class="suffix">%</span>
+        </div>
+        <p class="hint">A real (after-inflation) global equity return of ~5% is a common planning assumption. Lower it for a more conservative view.</p>
+      </div>
+
+      <div class="field">
+        <label class="cap">Where the money goes instead</label>
+        <div class="seg" id="routeSeg">
+          <button data-route="isa" class="on">ISA · post-tax</button>
+          <button data-route="pension">Pension · pre-tax</button>
+        </div>
+        <p class="hint">ISA invests the cash you'd have spent. Pension invests the <b>gross</b> income behind it (with tax relief), taxed on the way out.</p>
+      </div>
+
+      <div class="field" id="retField" style="display:none">
+        <label class="cap" for="retTax">Tax rate in retirement</label>
+        <div class="small-num">
+          <input id="retTax" type="number" min="0" max="60" step="1" value="20" inputmode="numeric">
+          <span class="suffix">%</span>
+        </div>
+        <p class="hint">25% of a pension comes out tax-free; the rest is taxed at this rate. Many higher-rate earners fall to basic rate in retirement.</p>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div>
+      <div class="hero">
+        <div class="htag">Foregone future wealth</div>
+        <div class="big" id="heroVal">£0</div>
+        <p class="sub" id="heroSub"></p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="k"><span class="dot" style="background:var(--blue)"></span>You pay</div>
+          <div class="v" id="paidVal">£0</div>
+          <div class="note" id="paidNote"></div>
+        </div>
+        <div class="stat">
+          <div class="k" id="preK"><span class="dot" style="background:var(--teal-deep)"></span>You earn (pre-tax)</div>
+          <div class="v" id="preVal">£0</div>
+          <div class="note" id="preNote"></div>
+        </div>
+        <div class="stat">
+          <div class="k"><span class="dot" style="background:var(--purple)"></span>Cost multiplier</div>
+          <div class="v" id="multVal">0×</div>
+          <div class="note">future wealth per £1 spent</div>
+        </div>
+      </div>
+
+      <div class="card chart-card">
+        <h3>The widening gap</h3>
+        <p class="csub">What you've actually handed over, versus what that money would be worth invested.</p>
+        <div class="legend">
+          <span><i style="background:var(--blue)"></i>Cumulative spend</span>
+          <span><i style="background:var(--purple)"></i><span id="legInv">Invested instead</span></span>
+        </div>
+        <svg id="chart" viewBox="0 0 700 320" role="img" aria-label="Cumulative spend versus invested value over time"></svg>
+        <div class="readout" id="readout"></div>
+      </div>
+
+      <div class="card ladder-card">
+        <h3>Three ways to read the same expense</h3>
+        <div class="rung">
+          <div class="rl"><span class="rname">What you pay <small>cash out the door</small></span><span class="rval" id="l1" style="color:var(--blue)">£0</span></div>
+          <div class="bar"><div id="b1" style="background:var(--blue);width:0%"></div></div>
+        </div>
+        <div class="rung">
+          <div class="rl"><span class="rname" id="r2name">What you had to earn <small>before tax</small></span><span class="rval" id="l2" style="color:var(--teal-deep)">£0</span></div>
+          <div class="bar"><div id="b2" style="background:var(--teal);width:0%"></div></div>
+        </div>
+        <div class="rung">
+          <div class="rl"><span class="rname" id="r3name">What you give up <small>invested over horizon</small></span><span class="rval" id="l3" style="color:var(--purple)">£0</span></div>
+          <div class="bar"><div id="b3" style="background:var(--purple);width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card explain">
+        <h3>How this works</h3>
+        <p class="intro">Money you spend has already been taxed once, and it could have been invested instead. This calculator restates a single expense in three ways so the real trade-off is easy to see.</p>
+
+        <div class="keyrow"><span class="kdot" style="background:var(--blue)"></span><p><b>What you pay</b> is the cash that actually leaves your account. For a recurring cost it is the full amount added up across your whole horizon.</p></div>
+        <div class="keyrow"><span class="kdot" style="background:var(--teal-deep)"></span><p><b>What you earn (pre-tax)</b> grosses the spend back up to the income it took to fund it. At a 40% marginal rate, every £60 spent needed £100 of salary to begin with.</p></div>
+        <div class="keyrow"><span class="kdot" style="background:var(--purple)"></span><p><b>What you give up</b> is the headline figure. It is what that money would be worth if you invested it instead and left it to compound for your chosen horizon.</p></div>
+
+        <h4>The two routes</h4>
+        <p>The <b>ISA route</b> invests the post-tax cash you would otherwise have spent. It grows tax-free and comes out tax-free, so the future value is simply your money compounded.</p>
+        <p>The <b>pension route</b> invests the gross income behind the spend, because that money could have gone into a pension and picked up tax relief on the way in. The pot grows tax-free, but withdrawals are taxed: 25% comes out tax-free and the rest is taxed at your retirement rate. The pension route usually ends up larger, because relief puts more money to work from day one and a quarter of it escapes tax entirely.</p>
+
+        <h4>Setting the return</h4>
+        <p>Enter a <b>real</b> (after-inflation) return so every figure reads in today's money. Around 5% is a common long-run assumption for global equities. Lower it for a more cautious view, or raise it to stress-test the upside.</p>
+
+        <h4>Reading the chart</h4>
+        <p>The blue line is what you have handed over so far. The purple line is what the same money would be worth invested. The shaded wedge between them is the cost of spending rather than investing, and it widens the longer your horizon. Hover or drag along it to read the gap in any year.</p>
+      </div>
+
+      <p class="assumptions" id="assume"></p>
+    </div>
+  </div>
+
+  <footer>Estimates only. Returns are assumed constant and are not guaranteed; investing carries risk of loss. Not financial advice.</footer>
+</div>
+
+<script>
+(function(){
+  // ---------- State ----------
+  const state = { amount:100, type:'recurring', ppy:12, tax:40, years:20, ret:5, route:'isa', retTax:20 };
+  const PERIOD_LABEL = {365:'day',52:'week',12:'month',1:'year'};
+
+  // ---------- Helpers ----------
+  const $ = id => document.getElementById(id);
+  const gbp = n => '£' + Math.round(n).toLocaleString('en-GB');
+  const gbpc = n => { // compact-ish but readable
+    if (n >= 1e6) return '£' + (n/1e6).toLocaleString('en-GB',{maximumFractionDigits:2}) + 'm';
+    return '£' + Math.round(n).toLocaleString('en-GB');
+  };
+
+  function compute(){
+    const t  = Math.min(Math.max(state.tax,0),69)/100;
+    const tr = Math.min(Math.max(state.retTax,0),69)/100;
+    const r  = Math.max(state.ret,0)/100;
+    const N  = state.years;
+    const E  = Math.max(state.amount,0);
+    const pension = state.route==='pension';
+
+    // What gets invested instead of spent:
+    //   ISA     -> the post-tax cash itself (E)
+    //   Pension -> the GROSS income behind it (E/(1-t)), funded by relief
+    const cMult = pension ? 1/(1-t) : 1;
+    // Pension withdrawals: 25% tax-free, remainder taxed at retirement rate
+    const netFactor = pension ? (0.25 + 0.75*(1-tr)) : 1;
+
+    let series = [];   // {year, paid, invested}  -- invested = net spendable
+    let paid, grossPot;
+
+    if (state.type === 'once'){
+      paid = E;
+      const base = E*cMult;
+      grossPot = base*Math.pow(1+r,N);
+      for (let y=0; y<=N; y++){
+        series.push({ year:y, paid:E, invested:base*Math.pow(1+r,y)*netFactor });
+      }
+    } else {
+      const ppy = state.ppy;
+      const i = Math.pow(1+r,1/ppy)-1;
+      const PMT = E*cMult;
+      const annFV = n => i>0 ? PMT*((Math.pow(1+i,n)-1)/i) : PMT*n;
+      const n = ppy*N;
+      paid = E*n;
+      grossPot = annFV(n);
+      for (let y=0; y<=N; y++){
+        series.push({ year:y, paid:E*ppy*y, invested:annFV(ppy*y)*netFactor });
+      }
+    }
+    const preTax = paid/(1-t);        // gross income behind the spend = pension contribution
+    const fv = grossPot*netFactor;    // net spendable wealth forgone
+    const mult = paid>0 ? fv/paid : 0;
+    return { paid, preTax, fv, grossPot, mult, pension, t, tr, r, N, series };
+  }
+
+  // ---------- Render numbers ----------
+  function frequencyNote(){
+    if (state.type==='once') return 'one-off';
+    return gbp(state.amount) + ' / ' + PERIOD_LABEL[state.ppy];
+  }
+
+  function render(){
+    const m = compute();
+    const horizonTxt = state.years + (state.years===1?' year':' years');
+    const freqL = PERIOD_LABEL[state.ppy];
+
+    $('heroVal').textContent = gbpc(m.fv);
+
+    if (m.pension){
+      if (state.type==='once'){
+        $('heroSub').innerHTML = `Routed into a pension, the gross <b>${gbp(m.preTax)}</b> behind this purchase grows to <b>${gbpc(m.grossPot)}</b> at ${state.ret}% over ${horizonTxt}, leaving about <b>${gbpc(m.fv)}</b> in your pocket once withdrawal tax is paid.`;
+      } else {
+        $('heroSub').innerHTML = `Redirected into a pension at the gross rate, that <b>${gbp(state.amount)}/${freqL}</b> builds a pot of <b>${gbpc(m.grossPot)}</b> after ${horizonTxt}, or about <b>${gbpc(m.fv)}</b> spendable after withdrawal tax.`;
+      }
+    } else {
+      if (state.type==='once'){
+        $('heroSub').innerHTML = `Spend it once and it's gone. Invested at ${state.ret}% for ${horizonTxt}, that same <b>${gbp(state.amount)}</b> would have grown into the figure above.`;
+      } else {
+        $('heroSub').innerHTML = `Keep paying <b>${gbp(state.amount)}/${freqL}</b> and invest it instead, and after ${horizonTxt} at ${state.ret}% you'd be sitting on the figure above.`;
+      }
+    }
+
+    $('paidVal').textContent = gbpc(m.paid);
+    $('paidNote').textContent = state.type==='once' ? 'single purchase' : `over ${horizonTxt} (${frequencyNote()})`;
+
+    $('preK').innerHTML = `<span class="dot" style="background:var(--teal-deep)"></span>` + (m.pension ? 'Into pension (gross)' : 'You earn (pre-tax)');
+    $('preVal').textContent = gbpc(m.preTax);
+    $('preNote').textContent = m.pension ? `incl. ${state.tax}% tax relief` : `gross income at ${state.tax}% tax`;
+
+    $('multVal').textContent = m.mult.toLocaleString('en-GB',{maximumFractionDigits:1}) + '×';
+
+    $('legInv').textContent = m.pension ? 'Pension, net spendable' : 'Invested instead';
+
+    // Ladder
+    const maxL = Math.max(m.paid, m.preTax, m.fv) || 1;
+    $('l1').textContent = gbpc(m.paid);   $('b1').style.width = (m.paid/maxL*100)+'%';
+    $('l2').textContent = gbpc(m.preTax); $('b2').style.width = (m.preTax/maxL*100)+'%';
+    $('l3').textContent = gbpc(m.fv);     $('b3').style.width = (m.fv/maxL*100)+'%';
+    $('r2name').innerHTML = m.pension ? `Paid into pension <small>gross, with relief</small>` : `What you had to earn <small>before tax</small>`;
+    $('r3name').innerHTML = m.pension ? `What you give up <small>net, after withdrawal tax</small>` : `What you give up <small>invested over horizon</small>`;
+
+    // Assumptions
+    let a = `<b>Method:</b> pre-tax figure = spend ÷ (1 − tax). `;
+    if (m.pension){
+      a += `Pension route invests the <b>gross</b> income (${gbp(state.amount)} grossed up by ${state.tax}% relief) at ${state.ret}% a year`;
+      a += state.type==='once' ? '. ' : `, contributed every ${freqL}. `;
+      a += `On withdrawal 25% is tax-free and the rest taxed at ${state.retTax}%. Tax-free portion assumed uncapped (real cap £268,275 across all pensions); salary sacrifice would also save National Insurance and improve this further.`;
+    } else {
+      a += `Invested value compounds the <b>post-tax</b> cash at ${state.ret}% a year`;
+      a += state.type==='once' ? '.' : `, paid every ${freqL} and reinvested.`;
+      a += ` Returns shown gross of tax on the investment itself (true inside an ISA). Treat the return as <b>real</b> to read every figure in today's money.`;
+    }
+    $('assume').innerHTML = a;
+
+    drawChart(m);
+    lastModel = m;
+  }
+
+  // ---------- Chart ----------
+  let lastModel = null;
+  const W=700, H=320, padL=64, padR=18, padT=16, padB=34;
+
+  function niceMax(v){
+    if (v<=0) return 1;
+    const pow = Math.pow(10, Math.floor(Math.log10(v)));
+    const f = v/pow;
+    const step = f<=1?1:f<=2?2:f<=5?5:10;
+    return step*pow;
+  }
+  function fmtAxis(v){
+    if (v>=1e6) return '£'+(v/1e6).toLocaleString('en-GB',{maximumFractionDigits:1})+'m';
+    if (v>=1e3) return '£'+Math.round(v/1e3)+'k';
+    return '£'+Math.round(v);
+  }
+
+  function drawChart(m){
+    const s = m.series;
+    const maxY = niceMax(Math.max(s[s.length-1].invested, s[s.length-1].paid));
+    const N = m.N;
+    const x = y => padL + (y/N)*(W-padL-padR);
+    const yv = v => H-padB - (v/maxY)*(H-padT-padB);
+
+    const ptsPaid = s.map(d=>`${x(d.year).toFixed(1)},${yv(d.paid).toFixed(1)}`);
+    const ptsInv  = s.map(d=>`${x(d.year).toFixed(1)},${yv(d.invested).toFixed(1)}`);
+
+    // wedge fill = area between invested (top) and paid (bottom)
+    const wedge = `M${ptsInv.join(' L')} L${[...ptsPaid].reverse().join(' L')} Z`;
+
+    // gridlines (y)
+    let grid='';
+    const ticks=5;
+    for (let k=0;k<=ticks;k++){
+      const val = maxY*k/ticks, yy=yv(val);
+      grid += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#eee" stroke-width="1"/>`;
+      grid += `<text x="${padL-10}" y="${yy+4}" text-anchor="end" font-size="11" fill="#999" font-family="inherit">${fmtAxis(val)}</text>`;
+    }
+    // x labels
+    let xlab='';
+    const xs = N<=10?N:(N%5===0?5:4);
+    for (let k=0;k<=xs;k++){
+      const yr=Math.round(N*k/xs), xx=x(yr);
+      xlab += `<text x="${xx}" y="${H-padB+20}" text-anchor="middle" font-size="11" fill="#999" font-family="inherit">${yr}y</text>`;
+    }
+
+    const svg = `
+      ${grid}${xlab}
+      <path d="${wedge}" fill="${getC('--purple')}" opacity="0.10"/>
+      <polyline points="${ptsPaid.join(' ')}" fill="none" stroke="${getC('--blue')}" stroke-width="2.5" stroke-linejoin="round"/>
+      <polyline points="${ptsInv.join(' ')}" fill="none" stroke="${getC('--purple')}" stroke-width="3" stroke-linejoin="round"/>
+      <g id="hoverG" style="opacity:0">
+        <line id="hLine" y1="${padT}" y2="${H-padB}" stroke="#bbb" stroke-width="1" stroke-dasharray="3 3"/>
+        <circle id="hP" r="4.5" fill="${getC('--blue')}" stroke="#fff" stroke-width="2"/>
+        <circle id="hI" r="4.5" fill="${getC('--purple')}" stroke="#fff" stroke-width="2"/>
+      </g>
+      <rect id="hitbox" x="${padL}" y="${padT}" width="${W-padL-padR}" height="${H-padT-padB}" fill="transparent" style="cursor:crosshair"/>
+    `;
+    const chart = $('chart');
+    chart.innerHTML = svg;
+
+    // interactivity
+    const hit = $('hitbox'), g=$('hoverG');
+    function move(ev){
+      const rect = chart.getBoundingClientRect();
+      const clientX = (ev.touches?ev.touches[0].clientX:ev.clientX);
+      const px = (clientX-rect.left)/rect.width*W;
+      let yr = Math.round(((px-padL)/(W-padL-padR))*N);
+      yr = Math.min(Math.max(yr,0),N);
+      const d = s[yr];
+      g.style.opacity=1;
+      $('hLine').setAttribute('x1',x(yr)); $('hLine').setAttribute('x2',x(yr));
+      $('hP').setAttribute('cx',x(yr)); $('hP').setAttribute('cy',yv(d.paid));
+      $('hI').setAttribute('cx',x(yr)); $('hI').setAttribute('cy',yv(d.invested));
+      const gap = d.invested-d.paid;
+      $('readout').innerHTML = `<b>Year ${yr}:</b> spent ${gbp(d.paid)} · invested value ${gbp(d.invested)} · gap <b>${gbp(gap)}</b>`;
+    }
+    function leave(){ g.style.opacity=0; $('readout').innerHTML = defaultReadout(m); }
+    hit.addEventListener('mousemove',move);
+    hit.addEventListener('mouseleave',leave);
+    hit.addEventListener('touchmove',function(e){e.preventDefault();move(e);},{passive:false});
+    hit.addEventListener('touchend',leave);
+    $('readout').innerHTML = defaultReadout(m);
+  }
+  function defaultReadout(m){
+    const gap = m.fv-m.paid;
+    return `Over ${m.N} years the gap reaches <b>${gbp(gap)}</b>. Hover the chart to trace it.`;
+  }
+  function getC(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  // ---------- Wire up controls ----------
+  $('amount').addEventListener('input', e=>{ state.amount = parseFloat(e.target.value)||0; render(); });
+
+  $('typeSeg').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    state.type=b.dataset.type;
+    [...$('typeSeg').children].forEach(x=>x.classList.toggle('on',x===b));
+    $('freq').classList.toggle('hide', state.type==='once');
+    render();
+  });
+
+  $('freq').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    state.ppy=parseInt(b.dataset.ppy);
+    [...$('freq').children].forEach(x=>x.classList.toggle('on',x===b));
+    render();
+  });
+
+  function syncTaxPresets(){
+    [...$('taxPresets').children].forEach(x=>x.classList.toggle('on', parseInt(x.dataset.tax)===state.tax));
+  }
+  $('tax').addEventListener('input', e=>{ state.tax=parseFloat(e.target.value)||0; syncTaxPresets(); render(); });
+  $('taxPresets').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    state.tax=parseInt(b.dataset.tax); $('tax').value=state.tax; syncTaxPresets(); render();
+  });
+
+  const yearsEl=$('years');
+  function syncSlider(){
+    const pct=((state.years-yearsEl.min)/(yearsEl.max-yearsEl.min))*100;
+    yearsEl.style.setProperty('--fill',pct+'%');
+    $('yearsVal').textContent=state.years;
+  }
+  yearsEl.addEventListener('input', e=>{ state.years=parseInt(e.target.value); syncSlider(); render(); });
+
+  $('ret').addEventListener('input', e=>{ state.ret=parseFloat(e.target.value)||0; render(); });
+
+  $('routeSeg').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    state.route=b.dataset.route;
+    [...$('routeSeg').children].forEach(x=>x.classList.toggle('on',x===b));
+    $('retField').style.display = state.route==='pension' ? '' : 'none';
+    render();
+  });
+  $('retTax').addEventListener('input', e=>{ state.retTax=parseFloat(e.target.value)||0; render(); });
+
+  // init
+  syncSlider(); syncTaxPresets();
+  $('freq').classList.toggle('hide', state.type==='once');
+  render();
+})();
+</script>
+</body>
+</html>
