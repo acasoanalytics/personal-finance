@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISA Cash Conversion — Bridge Decision Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#F5F5F5;color:#222;font-size:13px;-webkit-text-size-adjust:100%;}
+#app{max-width:1160px;margin:0 auto;padding:16px;}
+.hdr{background:#416BA9;border-radius:10px;padding:20px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.hdr h1{color:#fff;font-size:21px;font-weight:700;letter-spacing:-.3px;}
+.hdr-sub{color:rgba(255,255,255,.72);font-size:12px;margin-top:5px;max-width:560px;line-height:1.5;}
+.hdr-right{text-align:right;}
+.hdr-rlbl{color:rgba(255,255,255,.6);font-size:11px;}
+.hdr-rval{font-size:22px;font-weight:700;margin-top:2px;}
+.main{display:grid;grid-template-columns:300px 1fr;gap:18px;}
+.ctrl{background:#fff;border-radius:10px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.06);align-self:start;}
+.sec{font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #416BA9;padding-bottom:6px;margin:16px 0 12px;}
+.sec:first-child{margin-top:0;}
+.sr{margin-bottom:13px;}
+.sr-hd{display:flex;justify-content:space-between;margin-bottom:3px;align-items:baseline;}
+.slbl{font-size:12px;font-weight:700;color:#444;}
+.sval{font-size:13px;font-weight:700;color:#416BA9;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#ddd;border-radius:2px;outline:none;cursor:pointer;margin:0;}
+input[type=range]:disabled{opacity:.4;cursor:not-allowed;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#416BA9;border-radius:50%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.22);}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;background:#416BA9;border-radius:50%;border:none;cursor:pointer;}
+.sub{font-size:10px;color:#aaa;margin-top:2px;line-height:1.4;}
+.derived{font-size:10px;color:#9FCFCA;font-weight:700;}
+.collapse-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #e0e0e0;padding-bottom:6px;margin:16px 0 0;user-select:none;}
+.collapse-hdr.open{border-bottom-color:#416BA9;}
+.collapse-hdr .arr{font-size:9px;color:#999;transition:transform .2s;}
+.collapse-hdr.open .arr{transform:rotate(180deg);color:#416BA9;}
+.collapse-body{overflow:hidden;max-height:0;transition:max-height .28s ease;}
+.collapse-body.open{max-height:420px;}
+.collapse-inner{padding-top:12px;}
+.modetog{display:flex;gap:4px;margin-bottom:12px;}
+.modetog button{flex:1;font-family:inherit;font-size:11px;font-weight:700;padding:6px 4px;border:1px solid #ddd;background:#fff;color:#888;border-radius:6px;cursor:pointer;}
+.modetog button.on{background:#416BA9;color:#fff;border-color:#416BA9;}
+.reset-btn{font-size:10px;color:#888;background:none;border:1px solid #ddd;border-radius:4px;padding:4px 9px;cursor:pointer;font-family:inherit;margin-top:4px;}
+.reset-btn:hover{border-color:#416BA9;color:#416BA9;}
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;}
+.kpi-row.two{grid-template-columns:1fr 1fr;}
+.eyebrow{font-size:10px;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.6px;margin:0 0 8px;}
+.riskbox{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;}
+.risk-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.risk-item{background:#FAFAFA;border-radius:8px;padding:12px 14px;border-left:4px solid #c0392b;}
+.risk-h{font-size:11px;font-weight:700;color:#555;margin-bottom:4px;line-height:1.3;}
+.risk-v{font-size:20px;font-weight:700;line-height:1.1;}
+.risk-s{font-size:10px;color:#999;margin-top:3px;}
+.risk-felt{font-size:11px;font-weight:700;margin-top:6px;}
+.lam-ctrl{display:flex;align-items:center;gap:10px;margin-bottom:8px;background:#FAFAFA;border-radius:8px;padding:8px 12px;}
+.lam-help{font-size:10.5px;color:#999;line-height:1.55;margin-bottom:12px;}
+.lam-lbl{font-size:11px;font-weight:700;color:#555;white-space:nowrap;}
+.lam-ctrl input[type=range]{flex:1;}
+.lam-val{font-size:13px;font-weight:700;color:#416BA9;white-space:nowrap;}
+.risk-foot{font-size:10.5px;color:#aaa;line-height:1.5;margin-top:12px;}
+.kpi{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid #416BA9;}
+.kpi-l{font-size:10px;color:#999;font-weight:700;text-transform:uppercase;margin-bottom:3px;letter-spacing:.3px;}
+.kpi-v{font-size:19px;font-weight:700;color:#222;line-height:1.1;}
+.kpi-s{font-size:10px;color:#aaa;margin-top:3px;line-height:1.4;}
+/* Verdict banner */
+.verdict{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;border-left:5px solid #416BA9;}
+.verdict-t{font-size:16px;font-weight:700;margin-bottom:4px;}
+.verdict-b{font-size:12px;color:#555;line-height:1.55;}
+/* Matrix */
+.panel{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);margin-bottom:16px;}
+.panel-t{font-size:15px;font-weight:700;color:#222;margin-bottom:2px;}
+.panel-s{font-size:11px;color:#888;margin-bottom:16px;line-height:1.5;}
+.mtx{display:grid;grid-template-columns:90px 1fr 1fr;gap:10px;}
+.mtx-corner{}
+.mtx-colhd{font-size:12px;font-weight:700;text-align:center;padding:8px;border-radius:7px;color:#fff;}
+.mtx-rowhd{display:flex;align-items:center;justify-content:flex-end;text-align:right;font-size:12px;font-weight:700;color:#444;padding-right:4px;line-height:1.3;}
+.cell{border-radius:8px;padding:12px;border:1px solid #eee;position:relative;overflow:hidden;}
+.cell-prob{font-size:13px;font-weight:700;color:#416BA9;margin-bottom:8px;}
+.cell-row{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;margin-bottom:3px;}
+.cell-row .k{color:#888;font-weight:700;}
+.cell-row .v{font-weight:700;}
+.cell-delta{margin-top:8px;padding-top:8px;border-top:1px solid #eee;font-size:12px;display:flex;justify-content:space-between;align-items:baseline;}
+.cell-delta .k{font-weight:700;color:#666;}
+.cell-delta .v{font-weight:700;font-size:15px;}
+.cell-tag{font-size:10px;margin-top:7px;font-weight:700;line-height:1.3;padding:4px 7px;border-radius:5px;}
+.tag-bad{background:#FFF0F0;color:#c0392b;}
+.tag-good{background:#EAF6F0;color:#1a7a4f;}
+.tag-neutral{background:#F2F2F2;color:#777;}
+.cwrap{height:300px;position:relative;margin-bottom:8px;}
+.xtog{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:12px;}
+.xtog button{font-family:inherit;font-size:11px;font-weight:700;padding:5px 12px;border:1px solid #ddd;background:#fff;color:#888;border-radius:6px;cursor:pointer;}
+.xtog button.on{background:#416BA9;color:#fff;border-color:#416BA9;}
+.note{background:#EEF3FA;border-radius:8px;padding:12px 14px;font-size:11px;color:#3c5a82;line-height:1.6;margin-top:4px;}
+.note b{color:#2c4a72;}
+footer{text-align:center;margin-top:14px;font-size:10px;color:#ccc;line-height:1.6;}
+@media(max-width:760px){
+  .main{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .risk-grid{grid-template-columns:1fr;}
+  .mtx{grid-template-columns:60px 1fr 1fr;gap:7px;}
+  .cell{padding:10px;}
+  .hdr-right{text-align:left;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="hdr">
+  <div>
+    <h1>ISA Cash Conversion — Bridge Decision</h1>
+    <div class="hdr-sub">Stay invested vs convert equity to cash now, against an uncertain near-term need and an uncertain market. Each strategy has one painful corner — this sizes both.</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-rlbl" id="hdr-rlbl">Verdict (expected value)</div>
+    <div class="hdr-rval" id="hdr-verdict" style="color:#fff"></div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- Controls -->
+<div class="ctrl">
+
+  <div class="sec">The decision</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Amount in question</span><span class="sval" id="v-amt"></span></div>
+    <input type="range" id="s-amt" min="10000" max="1000000" step="5000" value="20000">
+    <div class="sub">Equity you'd convert to cash to cover the possible need</div>
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Horizon</span><span class="sval" id="v-yr"></span></div>
+    <input type="range" id="s-yr" min="1" max="36" step="1" value="3">
+    <div class="sub">When the need would land / when you'd reconvert</div>
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">P(you need the money)</span><span class="sval" id="v-p"></span></div>
+    <input type="range" id="s-p" min="0" max="100" step="5" value="50">
+    <div class="sub" id="p-help">e.g. probability you need the money by then</div>
+  </div>
+
+  <div class="sec">Market view</div>
+  <div class="modetog">
+    <button id="mode-d" class="on" onclick="setMode('derived')">From history (μ, σ)</button>
+    <button id="mode-m" onclick="setMode('manual')">My own view</button>
+  </div>
+
+  <div id="block-derived">
+    <div class="sr">
+      <div class="sr-hd"><span class="slbl">Equity return μ</span><span class="sval" id="v-mu"></span></div>
+      <input type="range" id="s-mu" min="-2" max="14" step="0.5" value="7">
+      <div class="sub">Expected annualised total return</div>
+    </div>
+    <div class="sr">
+      <div class="sr-hd"><span class="slbl">Equity volatility σ</span><span class="sval" id="v-sig"></span></div>
+      <input type="range" id="s-sig" min="4" max="30" step="0.5" value="16">
+      <div class="sub">Annualised. Higher σ ⇒ deeper down-cases &amp; lower P(up)</div>
+    </div>
+    <div class="note" style="margin-bottom:4px">Derived over your horizon: <b id="der-q"></b> chance up · typical up <b id="der-u"></b> · typical down <b id="der-d"></b></div>
+  </div>
+
+  <div id="block-manual" style="display:none">
+    <div class="sr">
+      <div class="sr-hd"><span class="slbl">P(market up)</span><span class="sval" id="v-q"></span></div>
+      <input type="range" id="s-q" min="0" max="100" step="1" value="67">
+      <div class="sub">Your subjective odds over the horizon</div>
+    </div>
+    <div class="sr">
+      <div class="sr-hd"><span class="slbl">Equity if up</span><span class="sval" id="v-u"></span></div>
+      <input type="range" id="s-u" min="0" max="50" step="1" value="16">
+    </div>
+    <div class="sr">
+      <div class="sr-hd"><span class="slbl">Equity if down</span><span class="sval" id="v-d"></span></div>
+      <input type="range" id="s-d" min="0" max="60" step="1" value="11">
+      <div class="sub">Size of the fall (as a positive %)</div>
+    </div>
+    <div class="note" style="margin-bottom:4px">Implied expected equity return over horizon: <b id="man-eg"></b></div>
+  </div>
+
+  <div class="sr" style="margin-top:13px">
+    <div class="sr-hd"><span class="slbl">Cash rate</span><span class="sval" id="v-c"></span></div>
+    <input type="range" id="s-c" min="0" max="8" step="0.1" value="3.8">
+    <div class="sub">Annualised, e.g. ISA money-market fund</div>
+  </div>
+
+  <div class="sub" style="margin-top:14px;color:#bbb">Tax, charges and partial drawdowns not modelled. Illustration only.</div>
+</div>
+
+<!-- Right panel -->
+<div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+    <div class="eyebrow" style="margin:0">The verdict</div>
+    <div class="xtog" style="margin:0">
+      <button class="on" data-vm="ev" onclick="setVerdict('ev')">Expected value</button>
+      <button data-vm="la" onclick="setVerdict('la')">Loss-aversion λ</button>
+    </div>
+  </div>
+  <div class="kpi-row two">
+    <div class="kpi" id="kpi-verdict-card">
+      <div class="kpi-l">Stay invested vs convert</div>
+      <div class="kpi-v" id="kpi-ev"></div>
+      <div class="kpi-s" id="kpi-ev-s"></div>
+    </div>
+    <div class="kpi" style="border-top-color:#9FCFCA">
+      <div class="kpi-l">Break-even P(up)</div>
+      <div class="kpi-v" id="kpi-be" style="color:#2a8a84"></div>
+      <div class="kpi-s" id="kpi-be-s"></div>
+    </div>
+  </div>
+
+  <div class="riskbox">
+    <div class="eyebrow" style="margin-top:0">The bad case in each direction — what you'd be insuring against</div>
+    <div class="lam-ctrl">
+      <span class="lam-lbl">Loss-aversion weight λ</span>
+      <input type="range" id="s-lam" min="1" max="3" step="0.1" value="2">
+      <span class="lam-val" id="v-lam"></span>
+    </div>
+    <div class="lam-help">λ is how much more a realised loss hurts than an equal gain feels good. λ&nbsp;=&nbsp;1 weighs them the same (risk-neutral — the loss-aversion view then matches expected value). Most people sit around 1.5–2.5: at λ&nbsp;=&nbsp;2, losing £100 stings about twice as much as gaining £100 pleases. It's applied only to the left corner here, because that's the one where you actually sell at a loss.</div>
+    <div class="risk-grid">
+      <div class="risk-item" style="border-left-color:#c0392b">
+        <div class="risk-h">Stay in, then need it in a fall</div>
+        <div class="risk-v" id="kpi-stay" style="color:#c0392b"></div>
+        <div class="risk-s" id="kpi-stay-s"></div>
+        <div class="risk-felt" id="stay-felt" style="color:#c0392b"></div>
+      </div>
+      <div class="risk-item" style="border-left-color:#B14FC5">
+        <div class="risk-h">Convert, then it rises &amp; you don't need it</div>
+        <div class="risk-v" id="kpi-conv" style="color:#B14FC5"></div>
+        <div class="risk-s" id="kpi-conv-s"></div>
+        <div class="risk-felt" id="conv-felt" style="color:#999"></div>
+      </div>
+    </div>
+    <div class="risk-foot">These don't change which strategy wins on average — they're the size and odds of the regret in each strategy's weak corner. The felt figures apply the loss-aversion weight λ to the left corner only, because it's a realised, forced loss; the right corner is a missed gain, so it isn't amplified. A small cash buffer only earns its keep against the left one.</div>
+  </div>
+
+  <div class="verdict">
+    <div class="verdict-t" id="vd-t"></div>
+    <div class="verdict-b" id="vd-b"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-t">The four corners</div>
+    <div class="panel-s">Pick a strategy to see its £ outcome in each corner, or Difference to see the gap. Green means that strategy wins the corner; red means the other one would have done better.</div>
+    <div class="xtog" style="margin-bottom:14px">
+      <button class="on" data-cv="matrix" onclick="setCorner('matrix')">Matrix</button>
+      <button data-cv="tree" onclick="setCorner('tree')">Tree</button>
+      <span style="width:1px;background:#ddd;margin:2px 6px;align-self:stretch"></span>
+      <button class="on" data-sv="diff" onclick="setStrat('diff')">Difference</button>
+      <button data-sv="stay" onclick="setStrat('stay')">Stay invested</button>
+      <button data-sv="convert" onclick="setStrat('convert')">Convert</button>
+    </div>
+    <div class="mtx" id="mtx"></div>
+    <div id="tree" style="display:none;overflow-x:auto"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-t">Sensitivity</div>
+    <div class="panel-s">Verdict value of staying minus converting (£), on whichever basis you've selected above. Above zero ⇒ stay; below ⇒ convert. Vertical line marks your current setting.</div>
+    <div class="xtog">
+      <button class="on" data-x="q" onclick="setX('q')">vs P(up)</button>
+      <button data-x="p" onclick="setX('p')">vs P(need)</button>
+      <button data-x="yr" onclick="setX('yr')">vs Horizon</button>
+      <button data-x="d" onclick="setX('d')">vs Down-size</button>
+    </div>
+    <div class="cwrap"><canvas id="chart"></canvas></div>
+    <div class="note" id="chart-note"></div>
+  </div>
+
+</div>
+</div>
+
+<footer>Binomial market model (up/down) with optional behavioural penalties. £ figures are the retained value of the slice after the need is met. No tax, charges or sequence-of-returns path modelled. For illustration only.</footer>
+</div>
+
+<script>
+const G=id=>document.getElementById(id);
+
+const S={amt:20000,yr:3,p:50,mu:7,sig:16,q:67,u:16,d:11,c:3.8,lam:2};
+let mode='derived';
+let xVar='q';
+let cornerView='matrix';
+let stratView='diff';
+let verdictMode='ev';
+
+/* ── Normal helpers ── */
+function erf(x){const t=1/(1+0.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;}
+const NCDF=z=>0.5*(1+erf(z/Math.SQRT2));
+const NPDF=z=>Math.exp(-z*z/2)/Math.sqrt(2*Math.PI);
+
+/* ── Derive q,u,d from mu,sig over horizon ── */
+function derive(yr,mu,sig){
+  const t=yr/12;
+  const mH=Math.pow(1+mu/100,t)-1;          // horizon mean return (fraction)
+  const sH=(sig/100)*Math.sqrt(t);          // horizon vol
+  const z=sH>0?mH/sH:(mH>0?20:-20);
+  const q=NCDF(z);
+  const ratio=NPDF(z);
+  const up=mH+sH*(ratio/Math.max(1e-9,q));          // E[r | r>0]
+  const dnMean=mH-sH*(ratio/Math.max(1e-9,(1-q)));  // E[r | r<0]  (negative)
+  return {q:q*100,u:up*100,d:-dnMean*100};
+}
+
+/* ── Active market params (fractions over horizon) ── */
+function market(){
+  let q,u,d;
+  if(mode==='derived'){const dv=derive(S.yr,S.mu,S.sig);q=dv.q;u=dv.u;d=dv.d;}
+  else {q=S.q;u=S.u;d=S.d;}
+  return {q:q/100,u:u/100,d:d/100};
+}
+const cashRet=yr=>Math.pow(1+S.c/100,yr/12)-1;   // horizon cash return (fraction)
+
+/* ── Core: outcomes for given params ── */
+function compute(o){
+  // o: {amt,p,q,u,d,c,yr}
+  const A=o.amt, p=o.p/100, q=o.q, u=o.u, d=o.d, c=o.c;
+
+  // Retained £ of the slice after meeting need (need=A, withdrawn in NEED branches)
+  // STAY
+  const stay_need_up   = A*u;                 // sold A from A(1+u): retained A*u
+  const stay_need_dn   = -A*d;                // sold into the fall at the depressed price
+  const stay_no_up     = A*(1+u);
+  const stay_no_dn     = A*(1-d);
+  // CASH
+  const cash_need      = A*c;                 // cash A(1+c) minus A spent
+  const cash_no        = A*(1+c);             // reconvert to equity at the new price
+
+  const cells=[
+    {need:true ,up:true , prob:p*q,         stay:stay_need_up, cash:cash_need},
+    {need:true ,up:false, prob:p*(1-q),     stay:stay_need_dn, cash:cash_need},
+    {need:false,up:true , prob:(1-p)*q,     stay:stay_no_up,   cash:cash_no},
+    {need:false,up:false, prob:(1-p)*(1-q), stay:stay_no_dn,   cash:cash_no},
+  ];
+  const lam=o.lam||1;
+  let ev=0, laEv=0;
+  cells.forEach(x=>{x.delta=x.stay-x.cash; ev+=x.prob*x.delta;
+    laEv+=x.prob*x.delta*((x.need&&!x.up)?lam:1);});  // amplify only the realised forced-loss corner
+
+  // Headline corner risks
+  const convCost = A*(u-c);                   // missed rally on converted cash
+  const convProb = (1-p)*q;
+  const stayCost = A*(d+c);                   // selling in a fall vs having held cash
+  const stayProb = p*(1-q);
+
+  const eg = q*u - (1-q)*d;                    // expected equity return over horizon
+  const breakeven = (u+d)>0 ? (d+c)/(u+d) : null;          // q* where ev=0
+  const k = 1 + p*(lam-1);
+  const laDen = (u-c)+(d+c)*k;
+  const laBreakeven = laDen!==0 ? (d+c)*k/laDen : null;    // q* where laEv=0
+
+  return {cells,ev,laEv,convCost,convProb,stayCost,stayProb,eg,breakeven,laBreakeven,c};
+}
+
+const fmt=v=>(v<0?'-£':'£')+Math.round(Math.abs(v)).toLocaleString('en-GB');
+const fmtK=v=>{const s=v<0?'-':'';v=Math.abs(v);return s+(v>=1e6?'£'+(v/1e6).toFixed(2)+'m':v>=1e3?'£'+Math.round(v/1e3)+'k':'£'+Math.round(v));};
+const pct=v=>v.toFixed(0)+'%';
+const pct1=v=>v.toFixed(1)+'%';
+
+/* ── Chart ── */
+let chart=null;
+function initChart(){
+  chart=new Chart(G('chart').getContext('2d'),{
+    type:'line',
+    data:{labels:[],datasets:[
+      {label:'EV(stay) − EV(convert)',data:[],borderColor:'#416BA9',backgroundColor:'rgba(65,107,169,.10)',fill:true,tension:.2,pointRadius:0,borderWidth:2.5},
+      {label:'zero',data:[],borderColor:'#bbb',borderWidth:1,borderDash:[4,4],pointRadius:0,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label==='zero'?null:' '+fmt(c.raw),title:items=>xLabel()+': '+items[0].label}}},
+      scales:{
+        y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>fmtK(v),font:{family:"'Gotham','Segoe UI',sans-serif",size:11}}},
+        x:{grid:{display:false},ticks:{font:{family:"'Gotham','Segoe UI',sans-serif",size:10},maxTicksLimit:10,callback:function(val){const l=this.getLabelForValue(val);return l;}}}
+      }
+    }
+  });
+}
+function xLabel(){return {q:'P(up)',p:'P(need)',yr:'Horizon (mo)',d:'Down-size'}[xVar];}
+
+function buildSweep(){
+  const m=market();
+  const base={amt:S.amt,p:S.p,q:m.q,u:m.u,d:m.d,c:cashRet(S.yr),yr:S.yr,lam:S.lam};
+  let xs=[], cur;
+  const pts=[];
+  if(xVar==='q'){for(let x=0;x<=100;x+=2.5)xs.push(x);cur=m.q*100;}
+  else if(xVar==='p'){for(let x=0;x<=100;x+=2.5)xs.push(x);cur=S.p;}
+  else if(xVar==='yr'){for(let x=1;x<=36;x+=1)xs.push(x);cur=S.yr;}
+  else {for(let x=0;x<=60;x+=2)xs.push(x);cur=m.d*100;}
+
+  xs.forEach(x=>{
+    let o={...base};
+    if(xVar==='q'){o.q=x/100;}
+    else if(xVar==='p'){o.p=x;}
+    else if(xVar==='yr'){const dv=mode==='derived'?derive(x,S.mu,S.sig):null;if(dv){o.q=dv.q/100;o.u=dv.u/100;o.d=dv.d/100;}o.c=cashRet(x);o.yr=x;}
+    else {o.d=x/100;}
+    pts.push(verdictMode==='la'?compute(o).laEv:compute(o).ev);
+  });
+  return {xs,pts,cur};
+}
+
+function updateChart(){
+  const {xs,pts,cur}=buildSweep();
+  chart.data.labels=xs.map(x=>xVar==='yr'?x:Math.round(x)+(xVar==='q'||xVar==='p'?'%':'%'));
+  chart.data.datasets[0].data=pts;
+  chart.data.datasets[1].data=xs.map(()=>0);
+  // marker for current x via point on the line
+  chart.data.datasets[0].pointRadius=xs.map(x=>Math.abs(x-cur)<(xVar==='yr'?0.6:1.4)?5:0);
+  chart.data.datasets[0].pointBackgroundColor='#B14FC5';
+  chart.data.datasets[0].pointBorderColor='#fff';
+  chart.data.datasets[0].pointBorderWidth=2;
+  chart.update('none');
+}
+
+/* ── Figure for a cell given the selected strategy view ── */
+function figs(c){
+  const win='#1a7a4f', lose='#c0392b';
+  if(stratView==='stay')
+    return {label:'Stay invested', main:fmt(c.stay), col:(c.delta>=0?win:lose),
+            cap:'vs convert '+(c.delta>=0?'+':'−')+fmt(Math.abs(c.delta))};
+  if(stratView==='convert'){const d=-c.delta;
+    return {label:'Convert to cash', main:fmt(c.cash), col:(d>=0?win:lose),
+            cap:'vs stay '+(d>=0?'+':'−')+fmt(Math.abs(d))};}
+  return {label:'Gap (stay − convert)', main:(c.delta>=0?'+':'')+fmt(c.delta), col:(c.delta>=0?win:lose),
+          cap:'Stay '+fmt(c.stay)+' · Convert '+fmt(c.cash)};
+}
+
+/* ── Matrix render ── */
+function renderMatrix(R){
+  const colUp ='<div class="mtx-colhd" style="background:#416BA9">Market up</div>';
+  const colDn ='<div class="mtx-colhd" style="background:#8a3aa0">Market down</div>';
+  function cell(c,tag,tagcls){
+    const f=figs(c);
+    return '<div class="cell">'
+      +'<div class="cell-prob">'+pct1(c.prob*100)+' likely</div>'
+      +'<div style="font-size:11px;font-weight:700;color:#888;margin-bottom:4px">'+f.label+'</div>'
+      +'<div style="font-size:21px;font-weight:700;line-height:1.05;color:'+f.col+'">'+f.main+'</div>'
+      +'<div style="font-size:10px;color:#999;margin-top:3px">'+f.cap+'</div>'
+      +'<div class="cell-tag '+tagcls+'" style="margin-top:9px">'+tag+'</div>'
+      +'</div>';
+  }
+  const c=R.cells; // order: need/up, need/down, no/up, no/down
+  G('mtx').innerHTML=
+    '<div class="mtx-corner"></div>'+colUp+colDn
+    +'<div class="mtx-rowhd">Need<br>the money</div>'
+      +cell(c[0],'Rode the gain, then sold — staying wins','tag-good')
+      +cell(c[1],'⚠ Sold into the fall','tag-bad')
+    +'<div class="mtx-rowhd">Don\'t<br>need it</div>'
+      +cell(c[2],'⚠ Reconvert after the rally — missed gain','tag-bad')
+      +cell(c[3],'Cash dodged the fall','tag-good');
+}
+
+/* ── Tree render (same four corners, decision-tree form) ── */
+function renderTree(R,m){
+  const c=R.cells; // need/up, need/down, no/up, no/down
+  const qP=Math.round(m.q*100), pP=S.p;
+  const NEEDc='#416BA9', UPc='#416BA9', DOWNc='#8a3aa0';
+  const edge=(x1,y1,x2,y2,col)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="1.5" opacity="0.55"/>`;
+  const elab=(x,y,t,col)=>`<text x="${x}" y="${y}" font-size="10.5" font-weight="700" fill="${col}" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke">${t}</text>`;
+  const node=(x,y,col)=>`<circle cx="${x}" cy="${y}" r="7" fill="${col}"/>`;
+  function leaf(x,yc,cell,name){
+    const top=yc-41, f=figs(cell);
+    return `<rect x="${x}" y="${top}" width="270" height="82" rx="8" fill="#fff" stroke="#e3e3e3"/>
+      <text x="${x+12}" y="${top+18}" font-size="11" font-weight="700" fill="#444">Market ${name}</text>
+      <text x="${x+258}" y="${top+18}" font-size="12.5" font-weight="700" fill="#416BA9" text-anchor="end">${pct1(cell.prob*100)} likely</text>
+      <text x="${x+12}" y="${top+44}" font-size="11" fill="#888">${f.label}</text>
+      <text x="${x+258}" y="${top+46}" font-size="18" font-weight="700" fill="${f.col}" text-anchor="end">${f.main}</text>
+      <text x="${x+12}" y="${top+68}" font-size="10" fill="#999">${f.cap}</text>`;
+  }
+  const rx=34, ry=190, n1x=185, lx=400, needY=95, noY=285, ly=[45,135,235,325];
+  const svg=`<svg viewBox="0 0 700 380" style="display:block;min-width:600px;width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">
+    ${edge(rx,ry,n1x,needY,NEEDc)}${edge(rx,ry,n1x,noY,NEEDc)}
+    ${edge(n1x,needY,lx,ly[0],UPc)}${edge(n1x,needY,lx,ly[1],DOWNc)}
+    ${edge(n1x,noY,lx,ly[2],UPc)}${edge(n1x,noY,lx,ly[3],DOWNc)}
+    ${elab((rx+n1x)/2,(ry+needY)/2-6,'Need it · '+pP+'%',NEEDc)}
+    ${elab((rx+n1x)/2,(ry+noY)/2+16,"Don't need it · "+(100-pP)+'%',NEEDc)}
+    ${elab((n1x+lx)/2,(needY+ly[0])/2-4,'Up · '+qP+'%',UPc)}
+    ${elab((n1x+lx)/2,(needY+ly[1])/2+12,'Down · '+(100-qP)+'%',DOWNc)}
+    ${elab((n1x+lx)/2,(noY+ly[2])/2-4,'Up · '+qP+'%',UPc)}
+    ${elab((n1x+lx)/2,(noY+ly[3])/2+12,'Down · '+(100-qP)+'%',DOWNc)}
+    ${node(rx,ry,'#222')}${node(n1x,needY,NEEDc)}${node(n1x,noY,NEEDc)}
+    ${leaf(lx,ly[0],c[0],'up')}${leaf(lx,ly[1],c[1],'down')}
+    ${leaf(lx,ly[2],c[2],'up')}${leaf(lx,ly[3],c[3],'down')}
+  </svg>
+  <div style="font-size:11px;color:#666;margin-top:8px;line-height:1.5">Folding back the leaves by their probabilities: weighted gap = <b style="color:${R.ev>=0?'#1a7a4f':'#8a3aa0'}">${(R.ev>=0?'+':'')+fmt(R.ev)}</b> &rarr; ${R.ev>=0?'staying invested':'converting'} wins on average.</div>`;
+  G('tree').innerHTML=svg;
+}
+
+/* ── Main update ── */
+function update(){
+  // slider labels
+  G('v-amt').textContent=fmt(S.amt);
+  G('v-yr').textContent=S.yr+' mo';
+  G('v-p').textContent=S.p+'%';
+  const _t=new Date(); _t.setMonth(_t.getMonth()+S.yr);
+  G('p-help').textContent="e.g. probability you need the money by "+_t.toLocaleString('en-GB',{month:'long',year:'numeric'});
+  G('v-mu').textContent=pct1(S.mu); G('v-sig').textContent=pct1(S.sig);
+  G('v-q').textContent=S.q+'%'; G('v-u').textContent=S.u+'%'; G('v-d').textContent=S.d+'%';
+  G('v-c').textContent=pct1(S.c);
+
+  const m=market();
+  if(mode==='derived'){
+    G('der-q').textContent=pct(m.q*100);
+    G('der-u').textContent='+'+pct(m.u*100);
+    G('der-d').textContent='−'+pct(m.d*100);
+  } else {
+    const eg=(m.q*m.u-(1-m.q)*m.d)*100;
+    G('man-eg').textContent=(eg>=0?'+':'')+pct1(eg);
+  }
+
+  const R=compute({amt:S.amt,p:S.p,q:m.q,u:m.u,d:m.d,c:cashRet(S.yr),yr:S.yr,lam:S.lam});
+
+  // Active verdict basis (toggle: expected value vs loss-aversion weighted)
+  const useLA = verdictMode==='la';
+  const verdictEV = useLA ? R.laEv : R.ev;
+  const verdictBE = useLA ? R.laBreakeven : R.breakeven;
+  const stayWins = verdictEV>=0;
+
+  // Header verdict
+  G('hdr-verdict').textContent=(stayWins?'Stay invested':'Convert to cash');
+  G('hdr-rlbl').textContent=useLA?'Verdict (loss-aversion λ='+S.lam.toFixed(1)+'×)':'Verdict (expected value)';
+
+  // KPIs
+  G('kpi-ev').textContent=(verdictEV>=0?'+':'')+fmt(verdictEV);
+  G('kpi-ev').style.color=stayWins?'#1a7a4f':'#8a3aa0';
+  G('kpi-verdict-card').style.borderTopColor=stayWins?'#416BA9':'#8a3aa0';
+  G('kpi-ev-s').textContent=(useLA?'λ-weighted · ':'')+(stayWins?'staying ahead':'converting ahead');
+
+  G('kpi-conv').textContent=fmt(Math.max(0,R.convCost));
+  G('kpi-conv-s').textContent='worse than staying · '+pct1(R.convProb*100)+' chance';
+
+  G('kpi-stay').textContent=fmt(Math.max(0,R.stayCost));
+  G('kpi-stay-s').textContent='worse than holding cash · '+pct1(R.stayProb*100)+' chance';
+
+  G('v-lam').textContent=S.lam.toFixed(1)+'×';
+  G('stay-felt').textContent='Felt ≈ '+fmt(Math.max(0,R.stayCost)*S.lam)+'  ('+S.lam.toFixed(1)+'× — realised loss)';
+  G('conv-felt').textContent='Felt ≈ '+fmt(Math.max(0,R.convCost))+'  (missed gain — not amplified)';
+
+  if(verdictBE!=null && verdictBE>=0 && verdictBE<=1){
+    G('kpi-be').textContent=pct(verdictBE*100);
+    G('kpi-be-s').textContent='you: '+pct(m.q*100)+(m.q>=verdictBE?' — stay favoured':' — convert favoured');
+  } else {G('kpi-be').textContent='—';G('kpi-be-s').textContent='n/a';}
+
+  // Verdict text
+  const egH=R.eg*100;
+  let vt,vb;
+  if(!useLA){
+    vt = stayWins?'Stay invested':'Convert — equity is priced to lose to cash here';
+    vb = 'The verdict is purely '+pct1(egH)+' expected equity vs '+pct1(R.c*100)+' cash over '+S.yr+' months — a gap of '+fmt(S.amt*(R.eg-R.c))+' on '+fmt(S.amt)+'. P(need) doesn\'t move it: if you don\'t spend the cash you just reconvert, so all that matters is whether equity beats cash over the horizon. P(need) only changes how often you land in the bottom-left corner — selling in a fall — without changing which strategy wins on average.';
+  } else {
+    vt = stayWins?'Stay invested':'Convert to cash';
+    vb = 'Loss-aversion weighted at λ='+S.lam.toFixed(1)+'×. The realised-loss corner — needing the cash in a fall, '+pct1(R.stayProb*100)+' likely — is counted '+S.lam.toFixed(1)+'× heavier, moving the edge from '+(R.ev>=0?'+':'')+fmt(R.ev)+' on pure EV to '+(R.laEv>=0?'+':'')+fmt(R.laEv)+' once your aversion is priced in. '+(stayWins?'Staying still wins — your aversion isn\'t large enough to justify the cash drag.':'Converting now wins — this is the behavioural case for holding cash, and unlike the EV view it does move with P(need).');
+  }
+  G('vd-t').textContent=vt;
+  G('vd-t').style.color=stayWins?'#1a7a4f':'#8a3aa0';
+  G('vd-b').textContent=vb;
+
+  if(cornerView==='matrix'){G('mtx').style.display='grid';G('tree').style.display='none';renderMatrix(R);}
+  else {G('mtx').style.display='none';G('tree').style.display='block';renderTree(R,m);}
+  updateChart();
+
+  // chart note
+  let cn='';
+  if(xVar==='p') cn = useLA
+    ? 'Under loss-aversion weighting the line now tilts with P(need): the more likely you are to need the cash, the more often you hit the corner you fear, so staying\'s edge erodes as P(need) rises.'
+    : 'The flat line is the whole point: on pure EV, P(need) leaves the verdict unchanged. Whether you spend the cash or reconvert it, the only thing that decides this is equity vs cash — P(need) just sets how often you sell in a fall.';
+  else if(xVar==='q') cn='The line crosses zero at your break-even P(up) of '+(verdictBE!=null?pct(verdictBE*100):'—')+'. To the right, staying invested wins; to the left, cash wins.';
+  else if(xVar==='yr') cn='Longer horizons let equity\'s expected edge compound while cash drag accumulates — but also lengthen the window in which a need could surface.';
+  else cn='Deeper potential falls widen the sell-in-a-fall corner. Watch where the line dips below zero — that\'s the down-size at which converting starts to pay.';
+  G('chart-note').textContent=cn;
+}
+
+/* ── UI wiring ── */
+function setMode(mD){
+  mode=mD;
+  G('mode-d').classList.toggle('on',mD==='derived');
+  G('mode-m').classList.toggle('on',mD==='manual');
+  G('block-derived').style.display=mD==='derived'?'block':'none';
+  G('block-manual').style.display=mD==='manual'?'block':'none';
+  if(mD==='manual'){ // seed manual sliders from current derived values
+    const dv=derive(S.yr,S.mu,S.sig);
+    S.q=Math.round(dv.q); S.u=Math.round(dv.u); S.d=Math.round(dv.d);
+    G('s-q').value=S.q; G('s-u').value=S.u; G('s-d').value=S.d;
+  }
+  update();
+}
+function setX(x){xVar=x;document.querySelectorAll('.xtog button[data-x]').forEach(b=>b.classList.toggle('on',b.dataset.x===x));update();}
+function setCorner(v){cornerView=v;document.querySelectorAll('.xtog button[data-cv]').forEach(b=>b.classList.toggle('on',b.dataset.cv===v));update();}
+function setStrat(v){stratView=v;document.querySelectorAll('.xtog button[data-sv]').forEach(b=>b.classList.toggle('on',b.dataset.sv===v));update();}
+function setVerdict(v){verdictMode=v;document.querySelectorAll('.xtog button[data-vm]').forEach(b=>b.classList.toggle('on',b.dataset.vm===v));update();}
+
+[['s-amt','amt'],['s-yr','yr'],['s-p','p'],['s-mu','mu'],['s-sig','sig'],
+ ['s-q','q'],['s-u','u'],['s-d','d'],['s-c','c'],['s-lam','lam']
+].forEach(([id,k])=>G(id).addEventListener('input',function(){S[k]=+this.value;update();}));
+
+initChart();
+update();
+</script>
+</body>
+</html>
