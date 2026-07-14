@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimal Decumulation — EW–ES Stochastic Control</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Gotham','Segoe UI',Arial,sans-serif;background:#F5F5F5;color:#222;font-size:13px;}
+#app{max-width:1200px;margin:0 auto;padding:20px;}
+.hdr{background:#416BA9;border-radius:10px;padding:22px 28px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.hdr h1{color:#fff;font-size:22px;font-weight:700;letter-spacing:-.3px;}
+.hdr-sub{color:rgba(255,255,255,.7);font-size:12px;margin-top:4px;max-width:640px;line-height:1.5;}
+.hdr-right{text-align:right;}
+.hdr-rlbl{color:rgba(255,255,255,.6);font-size:11px;}
+.hdr-rval{color:#fff;font-size:24px;font-weight:700;margin-top:2px;}
+.main{display:grid;grid-template-columns:310px 1fr;gap:20px;}
+.ctrl{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.06);align-self:start;}
+.sec{font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #416BA9;padding-bottom:6px;margin:14px 0 12px;}
+.sec:first-child{margin-top:0;}
+.collapse-hdr{display:flex;justify-content:space-between;align-items:center;cursor:pointer;font-size:12px;font-weight:700;color:#416BA9;border-bottom:2px solid #e0e0e0;padding-bottom:6px;margin:14px 0 0;user-select:none;transition:border-color .2s;}
+.collapse-hdr:hover{border-bottom-color:#416BA9;}
+.collapse-hdr .arr{font-size:9px;transition:transform .2s;color:#999;}
+.collapse-hdr.open .arr{transform:rotate(180deg);color:#416BA9;}
+.collapse-hdr.open{border-bottom-color:#416BA9;}
+.collapse-body{overflow:hidden;max-height:0;transition:max-height .28s ease;}
+.collapse-body.open{max-height:800px;}
+.collapse-inner{padding-top:12px;}
+.sr{margin-bottom:12px;}
+.sr-hd{display:flex;justify-content:space-between;margin-bottom:3px;}
+.slbl{font-size:12px;font-weight:700;color:#444;}
+.sval{font-size:13px;font-weight:700;color:#416BA9;}
+input[type=range]{-webkit-appearance:none;width:100%;height:4px;background:#ddd;border-radius:2px;outline:none;cursor:pointer;margin:0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#416BA9;border-radius:50%;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.22);}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;background:#416BA9;border-radius:50%;border:none;cursor:pointer;}
+select{width:100%;padding:5px 8px;border:1px solid #ddd;border-radius:5px;font-family:inherit;font-size:12px;color:#222;background:#fff;}
+.sub{font-size:10px;color:#aaa;margin-top:2px;line-height:1.5;}
+.assump-block{margin-bottom:10px;}
+.assump-asset{font-size:11px;font-weight:700;color:#555;margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+.assump-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.assump-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.asr-hd{display:flex;justify-content:space-between;margin-bottom:2px;}
+.asr-lbl{font-size:10px;color:#888;font-weight:700;}
+.asr-val{font-size:11px;font-weight:700;color:#416BA9;}
+.reset-btn{font-size:10px;color:#888;background:none;border:1px solid #ddd;border-radius:4px;padding:3px 8px;cursor:pointer;font-family:inherit;margin-top:6px;}
+.reset-btn:hover{border-color:#416BA9;color:#416BA9;}
+.runbtn{width:100%;background:#416BA9;color:#fff;border:none;border-radius:6px;padding:11px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;margin-top:14px;transition:background .15s;}
+.runbtn:hover{background:#365a90;}
+.runbtn:disabled{background:#BBBBBB;cursor:default;}
+.runbtn.stale{background:#B14FC5;}
+.linkbtn{width:100%;background:none;color:#416BA9;border:1px solid #416BA9;border-radius:6px;padding:7px;font-family:inherit;font-weight:700;font-size:11px;cursor:pointer;margin-top:8px;}
+.linkbtn:hover{background:#EEF3FA;}
+.prog-wrap{height:6px;background:#e6e6e6;border-radius:3px;margin-top:10px;overflow:hidden;display:none;}
+.prog-bar{height:100%;width:0;background:#9FCFCA;transition:width .25s;}
+.prog-lbl{font-size:10px;color:#888;margin-top:4px;display:none;}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;}
+.kpi{background:#fff;border-radius:8px;padding:12px 14px;box-shadow:0 1px 4px rgba(0,0,0,.06);border-top:3px solid #416BA9;}
+.kpi-l{font-size:10px;color:#999;font-weight:700;text-transform:uppercase;margin-bottom:3px;}
+.kpi-v{font-size:18px;font-weight:700;color:#222;}
+.kpi-s{font-size:10px;color:#aaa;margin-top:1px;}
+.tabs{margin-bottom:0;}
+.tbtn{background:#e0e0e0;color:#555;border:none;padding:8px 18px;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;border-radius:6px 6px 0 0;margin-right:3px;transition:all .15s;}
+.tbtn.active{background:#416BA9;color:#fff;}
+.pnl{background:#fff;border-radius:0 10px 10px 10px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.06);min-height:430px;position:relative;}
+.ch-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px;}
+.ch-ttl{font-size:15px;font-weight:700;color:#222;margin:0;}
+.ch-sub{font-size:11px;color:#888;margin-top:3px;line-height:1.5;max-width:640px;}
+.cwrap{height:360px;position:relative;margin-bottom:4px;}
+.mcleg{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:12px;font-size:11px;color:#555;}
+.lsw{width:20px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0;}
+.lln{width:24px;display:inline-block;flex-shrink:0;}
+.heat-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.heat-ttl{font-size:12px;font-weight:700;color:#416BA9;margin-bottom:8px;}
+.heat-canvas{width:100%;height:340px;display:block;}
+.heat-note{font-size:10px;color:#999;margin-top:8px;line-height:1.6;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{padding:7px 10px;text-align:right;font-size:10px;font-weight:700;color:#999;text-transform:uppercase;border-bottom:2px solid #416BA9;}
+th:first-child{text-align:left;}
+td{padding:7px 10px;text-align:right;border-bottom:1px solid #f0f0f0;}
+td:first-child{text-align:left;font-weight:700;}
+.cmp-note{margin-top:16px;font-size:12px;color:#555;line-height:1.7;background:#EEF3FA;border-radius:8px;padding:14px 16px;}
+.overlay{position:absolute;inset:0;background:rgba(255,255,255,.75);display:none;align-items:center;justify-content:center;border-radius:0 10px 10px 10px;z-index:10;font-weight:700;color:#416BA9;font-size:13px;}
+.guide{margin-top:24px;}
+.guide-hdr{font-size:14px;font-weight:700;color:#416BA9;}
+.guide-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.gtoggle{display:flex;background:#e6e6e6;border-radius:6px;padding:2px;}
+.gtoggle button{border:none;background:transparent;color:#555;font-family:inherit;font-weight:700;font-size:11px;padding:6px 14px;border-radius:5px;cursor:pointer;transition:all .15s;}
+.gtoggle button.active{background:#416BA9;color:#fff;}
+.essay{background:#fff;border-radius:10px;padding:28px 32px;box-shadow:0 1px 4px rgba(0,0,0,.06);max-width:760px;display:none;}
+.essay h4{font-size:13px;font-weight:700;color:#416BA9;margin:20px 0 6px;}
+.essay h4:first-child{margin-top:0;}
+.essay p{font-size:13px;color:#444;line-height:1.75;margin-bottom:10px;}
+@media(max-width:820px){.essay{padding:20px;}}
+.guide-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.gcard{background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.gcard-t{font-weight:700;font-size:13px;margin-bottom:6px;}
+.gcard-b{font-size:12px;color:#555;line-height:1.65;}
+.gcard-b b{color:#333;}
+@media(max-width:820px){
+  .main{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:1fr 1fr;}
+  .heat-grid{grid-template-columns:1fr;}
+  .guide-grid{grid-template-columns:1fr;}
+  .hdr-right{text-align:left;}
+}
+footer{text-align:center;margin-top:16px;font-size:10px;color:#bbb;line-height:1.7;max-width:980px;margin-left:auto;margin-right:auto;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="hdr">
+  <div>
+    <h1>Optimal Decumulation — EW&ndash;ES Stochastic Control</h1>
+    <div class="hdr-sub">Given a pot, a minimum income you need and a maximum you would enjoy, this finds the year-by-year withdrawal and equity/bond split that deliver the most lifetime income without letting the worst outcomes get too severe. Based on Forsyth (2021), <i>North American Actuarial Journal</i>. All figures in today's money.</div>
+  </div>
+  <div class="hdr-right"><div class="hdr-rlbl">Expected avg withdrawal / yr</div><div class="hdr-rval" id="hdr-ew">&mdash;</div></div>
+</div>
+
+<div class="main">
+<div class="ctrl">
+
+  <div class="sec">Scenario</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Pot Size</span><span class="sval" id="v-pot"></span></div>
+    <input type="range" id="s-pot" min="100000" max="5000000" step="50000" value="1000000">
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Min Withdrawal (floor)</span><span class="sval" id="v-qmin"></span></div>
+    <input type="range" id="s-qmin" min="5000" max="150000" step="1000" value="40000">
+    <div class="sub" id="sub-qmin"></div>
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Max Withdrawal (ceiling)</span><span class="sval" id="v-qmax"></span></div>
+    <input type="range" id="s-qmax" min="5000" max="250000" step="1000" value="65000">
+    <div class="sub" id="sub-qmax"></div>
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Horizon</span><span class="sval" id="v-yr"></span></div>
+    <input type="range" id="s-yr" min="10" max="40" step="1" value="30">
+    <div class="sub">Annual withdrawal &amp; rebalance; withdrawals at t = 0 &hellip; M</div>
+  </div>
+
+  <div class="sec">Objective</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Risk Aversion &kappa;</span><span class="sval" id="v-kap"></span></div>
+    <input type="range" id="s-kap" min="-1.3" max="2" step="0.05" value="0.7">
+    <div class="sub">How much the worst outcomes count against average income. Higher = safer plan, lower income. There is no &ldquo;correct&rdquo; value: solve, look at the ES result, and adjust until the worst-case number is one you could live with.</div>
+  </div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">ES Level &alpha;</span></div>
+    <select id="s-alpha">
+      <option value="0.01">1% &mdash; average of the worst 1 in 100 outcomes</option>
+      <option value="0.025">2.5% &mdash; worst 1 in 40</option>
+      <option value="0.05" selected>5% &mdash; worst 1 in 20 (paper base case)</option>
+      <option value="0.10">10% &mdash; worst 1 in 10</option>
+    </select>
+  </div>
+
+  <div class="sec">Benchmarks</div>
+  <div class="sr">
+    <div class="sr-hd"><span class="slbl">Benchmark Equity Weight</span><span class="sval" id="v-bp"></span></div>
+    <input type="range" id="s-bp" min="0" max="100" step="5" value="40">
+    <div class="sub">Constant-mix allocation for the constant-withdrawal (= floor) and ARVA/PMT comparators, run on identical simulated paths</div>
+  </div>
+
+  <div class="collapse-hdr" id="mkt-hdr">Market Model (real, jump diffusion) <span class="arr">&#9660;</span></div>
+  <div class="collapse-body" id="mkt-body"><div class="collapse-inner">
+    <div class="assump-block">
+      <div class="assump-asset"><span class="assump-dot" style="background:#416BA9"></span>Equity index</div>
+      <div class="assump-grid">
+        <div><div class="asr-hd"><span class="asr-lbl">&mu; (real)</span><span class="asr-val" id="v-muS"></span></div><input type="range" id="s-muS" min="0.02" max="0.12" step="0.0025" value="0.0877"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&sigma; diffusive</span><span class="asr-val" id="v-sigS"></span></div><input type="range" id="s-sigS" min="0.05" max="0.30" step="0.005" value="0.1459"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&lambda; jumps/yr</span><span class="asr-val" id="v-lamS"></span></div><input type="range" id="s-lamS" min="0" max="1" step="0.01" value="0.3191"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">p(up jump)</span><span class="asr-val" id="v-puS"></span></div><input type="range" id="s-puS" min="0" max="1" step="0.01" value="0.2333"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&eta;&#8321; (up size&#8315;&sup1;)</span><span class="asr-val" id="v-e1S"></span></div><input type="range" id="s-e1S" min="1.5" max="20" step="0.1" value="4.4"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&eta;&#8322; (down size&#8315;&sup1;)</span><span class="asr-val" id="v-e2S"></span></div><input type="range" id="s-e2S" min="1.5" max="20" step="0.1" value="5.5"></div>
+      </div>
+    </div>
+    <div class="assump-block">
+      <div class="assump-asset"><span class="assump-dot" style="background:#9FCFCA"></span>Bond index</div>
+      <div class="assump-grid">
+        <div><div class="asr-hd"><span class="asr-lbl">&mu; (real)</span><span class="asr-val" id="v-muB"></span></div><input type="range" id="s-muB" min="-0.01" max="0.06" step="0.001" value="0.0239"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&sigma; diffusive</span><span class="asr-val" id="v-sigB"></span></div><input type="range" id="s-sigB" min="0.005" max="0.15" step="0.0025" value="0.0538"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&lambda; jumps/yr</span><span class="asr-val" id="v-lamB"></span></div><input type="range" id="s-lamB" min="0" max="1" step="0.01" value="0.383"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">p(up jump)</span><span class="asr-val" id="v-puB"></span></div><input type="range" id="s-puB" min="0" max="1" step="0.01" value="0.6111"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&eta;&#8321;</span><span class="asr-val" id="v-e1B"></span></div><input type="range" id="s-e1B" min="4" max="40" step="0.5" value="16"></div>
+        <div><div class="asr-hd"><span class="asr-lbl">&eta;&#8322;</span><span class="asr-val" id="v-e2B"></span></div><input type="range" id="s-e2B" min="4" max="40" step="0.5" value="17.5"></div>
+      </div>
+    </div>
+    <div class="assump-block" style="margin-bottom:4px">
+      <div class="asr-hd"><span class="asr-lbl">Diffusive correlation &rho;</span><span class="asr-val" id="v-rho"></span></div>
+      <input type="range" id="s-rho" min="-0.5" max="0.8" step="0.01" value="0.05">
+    </div>
+    <div class="sub">Defaults: Kou double-exponential jump diffusion calibrated to real CRSP equity / 10-yr Treasury, 1926&ndash;2019 (Forsyth 2021, Table 8.1). Mean jump sizes: down = &minus;1/&eta;&#8322;, up = +1/&eta;&#8321;.</div>
+    <button class="reset-btn" id="btn-reset">&#8634; Reset to paper calibration</button>
+  </div></div>
+
+  <div class="collapse-hdr" id="eng-hdr">Engine <span class="arr">&#9660;</span></div>
+  <div class="collapse-body" id="eng-body"><div class="collapse-inner">
+    <div class="sr">
+      <div class="sr-hd"><span class="slbl">Quality</span></div>
+      <select id="s-quality">
+        <option value="fast">Fast (~4s)</option>
+        <option value="std" selected>Standard (~10s)</option>
+        <option value="high">High (~30s)</option>
+      </select>
+      <div class="sub">Wealth grid &times; stratified quadrature buckets &times; W* iterations &times; MC paths. Fast: 400/160/15/20k &middot; Standard: 600/256/19/40k &middot; High: 800/384/23/80k</div>
+    </div>
+  </div></div>
+
+  <button class="runbtn" id="btn-run">Solve</button>
+  <div class="prog-wrap" id="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+  <div class="prog-lbl" id="prog-lbl"></div>
+  <button class="linkbtn" id="btn-link">Copy shareable link</button>
+</div>
+
+<div>
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-l">Worst-Case Average (ES)</div><div class="kpi-v" id="kpi-es">&mdash;</div><div class="kpi-s" id="kpi-es-s">average ending position, worst outcomes</div></div>
+    <div class="kpi"><div class="kpi-l">Wealth Target (W*)</div><div class="kpi-v" id="kpi-var">&mdash;</div><div class="kpi-s">the strategy defends this ending level; the worst &alpha;% finish below it</div></div>
+    <div class="kpi"><div class="kpi-l">Median Terminal</div><div class="kpi-v" id="kpi-med">&mdash;</div><div class="kpi-s" id="kpi-med-s">real, end of horizon</div></div>
+    <div class="kpi"><div class="kpi-l">P(W&#8348; &lt; 0)</div><div class="kpi-v" id="kpi-ruin">&mdash;</div><div class="kpi-s">ending below zero = drawing on resources outside the pot</div></div>
+    <div class="kpi"><div class="kpi-l">P(at ceiling, yr 10)</div><div class="kpi-v" id="kpi-ceil">&mdash;</div><div class="kpi-s">withdrawing the max</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tbtn active" id="tab-fan">Wealth Fan</button>
+    <button class="tbtn" id="tab-wd">Withdrawals</button>
+    <button class="tbtn" id="tab-heat">Control Maps</button>
+    <button class="tbtn" id="tab-cmp">Strategy Comparison</button>
+  </div>
+
+  <div class="pnl">
+    <div class="overlay" id="overlay">Solving HJB dynamic programme&hellip;</div>
+
+    <div id="pnl-fan">
+      <div class="ch-hdr"><div><h3 class="ch-ttl">Wealth Under the Optimal Strategy</h3><div class="ch-sub" id="fan-sub"></div></div></div>
+      <div class="mcleg">
+        <span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.12)"></span>P5&ndash;P95</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.22)"></span>P25&ndash;P75</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Median (optimal)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #BBBBBB"></span>Median, constant floor withdrawal</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #B14FC5"></span>Median, ARVA / PMT</span>
+      </div>
+      <div class="cwrap"><canvas id="ch-fan"></canvas></div>
+    </div>
+
+    <div id="pnl-wd" style="display:none">
+      <div class="ch-hdr"><div><h3 class="ch-ttl">Annual Withdrawal Profile</h3><div class="ch-sub">Percentiles of the optimal withdrawal across simulated paths. The maths turns out to recommend an all-or-nothing pattern: take only the floor while your future security is still in doubt, then jump to the ceiling once wealth is comfortably ahead of target &mdash; typically after the first five to ten years. Holding back early is deliberate: a bad run of markets hurts far more at the start, while you are selling assets, than the same run later on.</div></div></div>
+      <div class="mcleg">
+        <span style="display:flex;align-items:center;gap:5px"><span class="lsw" style="background:rgba(65,107,169,0.18)"></span>P25&ndash;P75</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2.5px solid #416BA9"></span>Median (optimal)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dashed #B14FC5"></span>Median, ARVA / PMT</span>
+        <span style="display:flex;align-items:center;gap:5px"><span class="lln" style="border-top:2px dotted #BBBBBB"></span>Floor / Ceiling</span>
+      </div>
+      <div class="cwrap"><canvas id="ch-wd"></canvas></div>
+    </div>
+
+    <div id="pnl-heat" style="display:none">
+      <div class="ch-hdr"><div><h3 class="ch-ttl">Optimal Control Surfaces</h3><div class="ch-sub">The full strategy on two maps: find your current wealth on the vertical axis and the year on the horizontal, and the colour tells you what to do &mdash; how much equity to hold (left) and how much to withdraw (right).</div></div></div>
+      <div class="heat-grid">
+        <div><div class="heat-ttl">Equity fraction p(w, t)</div><canvas class="heat-canvas" id="heat-p"></canvas></div>
+        <div><div class="heat-ttl">Withdrawal q(w, t), floor &rarr; ceiling</div><canvas class="heat-canvas" id="heat-q"></canvas></div>
+      </div>
+      <div class="heat-note">Teal = low (no equity / floor withdrawal), blue = middle, purple = high (all equity / ceiling withdrawal). Note the perhaps surprising equity rule: hold <i>more</i> equity when wealth has fallen behind, and wind it right down once the target is safely in hand &mdash; once you have won, there is nothing left to gain from taking risk; if you are behind, bonds alone cannot catch up. The withdrawal map shows a threshold: above a certain wealth level (which falls each year) take the ceiling, below it take the floor.</div>
+    </div>
+
+    <div id="pnl-cmp" style="display:none">
+      <div class="ch-hdr"><div><h3 class="ch-ttl">Optimal vs Rule-Based Strategies</h3><div class="ch-sub">All three evaluated on identical simulated market paths. Constant = fixed floor withdrawal, constant-mix allocation. ARVA/PMT = annuity recalculation each year on remaining wealth &amp; horizon, constant-mix allocation.</div></div></div>
+      <table id="cmp-table"><thead><tr>
+        <th>Strategy</th><th>Avg withdrawal / yr</th><th>Worst-case income</th><th>Total withdrawn (mean)</th><th>ES</th><th>Median terminal</th><th>P(W&#8348; &lt; 0)</th>
+      </tr></thead><tbody id="cmp-body"></tbody></table>
+      <div class="cmp-note" id="cmp-note"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<div class="guide">
+  <div class="guide-top">
+    <div class="guide-hdr">Model Guide</div>
+    <div class="gtoggle">
+      <button id="gt-cards" class="active">Quick cards</button>
+      <button id="gt-essay">Plain-English essay</button>
+    </div>
+  </div>
+  <div class="essay" id="guide-essay">
+    <h4>The problem</h4>
+    <p>You have spent decades building a pot of savings. Now you need to turn it into an income &mdash; and nobody will tell you what markets do next. Spend too freely and a bad decade can leave you short when you are least able to recover. Spend too cautiously and you spend your one retirement denying yourself things you could easily have afforded. Almost everyone errs on the second side, which feels safe but is a real loss too: it is holidays not taken and help not given, in exchange for dying with a large bank balance.</p>
+    <h4>Why the order of returns matters so much</h4>
+    <p>Here is the part that makes this genuinely hard. Two retirees can earn exactly the same average return over thirty years and end up in wildly different places, purely because the good and bad years arrived in a different order. A crash in your first five years of retirement, while you are selling investments every month to pay for life, does lasting damage &mdash; each sale during the crash locks the loss in permanently. The identical crash at age eighty barely matters. So the early years are a danger window, and any sensible plan should treat them differently.</p>
+    <h4>The old answer, and its flaw</h4>
+    <p>The famous rule of thumb says: withdraw 4% of your starting pot in year one, increase it with inflation each year, and never look at your balance again. It survives most of history. But notice what it refuses to do: respond to information. It must be cautious enough for the worst histories, which means in the ordinary ones it systematically underspends &mdash; the typical follower of the rule dies with roughly the pot they started with. That leftover money is the price of ignoring how things are actually going.</p>
+    <h4>What this tool does instead</h4>
+    <p>You give it five things: your pot, the minimum income you genuinely need each year (the <b>floor</b>), the most you would actually enjoy spending (the <b>ceiling</b>), how many years the money must last, and how much weight the worst outcomes should carry. The solver then works out the best possible response to <i>every situation you could find yourself in</i> &mdash; for each combination of &ldquo;this much wealth&rdquo; and &ldquo;this many years left&rdquo;, the best amount to withdraw and the best split between shares and bonds. It is not a rule of thumb; it is the mathematically best plan for the assumptions you feed it, taken from a 2021 paper by the actuarial researcher Peter Forsyth.</p>
+    <h4>What the best plan turns out to look like</h4>
+    <p>Two findings, both a little surprising. First, spending: the best plan is all-or-nothing. Take only the floor while your future security is still in doubt &mdash; typically the first five to ten years, the danger window &mdash; then jump to the ceiling once wealth has pulled comfortably ahead, and enjoy it. Amounts in between are almost never worth taking. The early restraint is not timidity; it is precisely what pays for the much higher income later.</p>
+    <p>Second, investing: hold <i>more</i> in shares after markets fall, and wind the risk right down once you are safely ahead of target. That sounds backwards, but the logic is clean. If you are already certain of meeting your goal, taking more risk gains you nothing you value. If you have fallen behind, cautious investments cannot close the gap. So safety is something the plan earns by getting ahead &mdash; not something scheduled by your birthday, as conventional &ldquo;de-risk with age&rdquo; funds do.</p>
+    <h4>How the tool keeps score on risk</h4>
+    <p>Rather than asking &ldquo;what is the chance of running out?&rdquo;, it asks a sharper question: <b>when things go badly, how badly do they go?</b> The headline risk number is the average ending position across the worst 1-in-20 outcomes. A negative figure does not mean bankruptcy &mdash; it means those unlucky versions of you would need to lean on resources outside the pot, such as housing wealth. The dial called &kappa; sets how heavily those worst cases count against everyday income. There is no correct setting: solve, look at the worst-case number, and adjust until it is one you could genuinely live with.</p>
+    <h4>Reading the screens</h4>
+    <p>The <b>wealth fan</b> shows the range of futures &mdash; the band covers most of what could happen, the dark line is the middle path. The <b>withdrawals</b> tab shows the income pattern: floor early, ceiling later. The <b>control maps</b> are the plan itself &mdash; find your wealth and the year, and the colour tells you what to do. The <b>comparison</b> tab pits the optimal plan against simpler rules on identical simulated markets, including a &ldquo;worst-case income&rdquo; column, because some rules that look safe merely hide their risk in your grocery budget rather than your estate.</p>
+    <h4>The small print</h4>
+    <p>Everything is in today&rsquo;s money, so figures need no inflation adjustment in your head. Tax, fees and account types are not modelled &mdash; use this to understand the <i>shape</i> of a good plan, not to set a budget. The standard market assumptions come from a century of American history, which may flatter the future; it is worth re-solving with a lower share return to see how the plan holds up. And the horizon is fixed rather than a lifespan &mdash; real planning should leave room for living longer than you budgeted for.</p>
+  </div>
+  <div class="guide-grid" id="guide-cards">
+
+    <div class="gcard" style="border-top:3px solid #416BA9">
+      <div class="gcard-t" style="color:#416BA9">What this tool does</div>
+      <div class="gcard-b">You supply four things: a pot, the minimum yearly income you need (the <b>floor</b>), the maximum you would actually enjoy spending (the <b>ceiling</b>), and a time horizon. The solver then works out, for every possible combination of wealth and year, the best amount to withdraw and the best equity/bond split. &ldquo;Best&rdquo; means: the highest average lifetime income that still keeps the worst outcomes within bounds. It is not a rule of thumb &mdash; it is the mathematically optimal plan for the market assumptions you give it, from a 2021 actuarial paper by Peter Forsyth.</div>
+    </div>
+
+    <div class="gcard" style="border-top:3px solid #9FCFCA">
+      <div class="gcard-t" style="color:#2a8a84">How risk is measured</div>
+      <div class="gcard-b">Rather than asking &ldquo;what is the chance of running out?&rdquo;, the tool asks &ldquo;<b>when things go badly, how badly do they go?</b>&rdquo; The headline risk number (ES, expected shortfall) is the average ending position across the worst 1-in-20 outcomes. Two plans can have the same chance of trouble while one leaves you slightly short and the other severely short &mdash; this measure tells them apart. The &kappa; dial sets how heavily those worst cases weigh against average income when the solver makes its trade-offs.</div>
+    </div>
+
+    <div class="gcard" style="border-top:3px solid #B14FC5">
+      <div class="gcard-t" style="color:#B14FC5">The withdrawal rule it finds</div>
+      <div class="gcard-b">The optimal plan is <b>all-or-nothing</b>: withdraw only the floor while your future security is in doubt, then the full ceiling once wealth is comfortably ahead &mdash; amounts in between are almost never best. On a typical path that means floor for the first five to ten years, ceiling thereafter. The early restraint is the whole trick: a poor run of markets does far more damage at the start of retirement, while you are selling assets to live on, than the same run does later. Spending lightly through that danger window is what buys the higher income afterwards.</div>
+    </div>
+
+    <div class="gcard" style="border-top:3px solid #416BA9">
+      <div class="gcard-t" style="color:#416BA9">The investment rule it finds</div>
+      <div class="gcard-b">The equity rule may look backwards at first: hold <b>more</b> equity after markets fall, and cut it right down once you are safely ahead of target. The logic: if you are already sure of meeting your goal, further risk gains you nothing worth having; if you have fallen behind, bond returns alone cannot close the gap. Compare this with a fixed 60/40 mix or a conventional &ldquo;de-risk with age&rdquo; glidepath &mdash; here, de-risking is something you earn by getting ahead, not something scheduled by birthday.</div>
+    </div>
+
+    <div class="gcard" style="border-top:3px solid #9FCFCA">
+      <div class="gcard-t" style="color:#2a8a84">Why it beats a fixed 4%-style rule</div>
+      <div class="gcard-b">A fixed inflation-linked withdrawal ignores how your investments actually perform. To survive the worst histories it must underspend in most of them &mdash; look at the constant rule&rsquo;s typical leftover pot in the comparison tab, often as large as the pot you started with. That is money you earned, saved and never spent. Letting withdrawals respond to actual wealth harvests the good outcomes: in the paper&rsquo;s tests, roughly a third more average income at essentially the same level of worst-case risk. All benchmarks here are run on identical simulated markets, so the differences are pure strategy &mdash; including a version of the dynamic-amortisation (ARVA/PMT) rule clamped to the same floor and ceiling, so you can see exactly what the optimisation adds over a sensible mechanical rule.</div>
+    </div>
+
+    <div class="gcard" style="border-top:3px solid #BBBBBB">
+      <div class="gcard-t" style="color:#777">Limits &amp; small print</div>
+      <div class="gcard-b">Everything is in <b>today&rsquo;s money</b> &mdash; withdrawals are assumed to rise with inflation automatically. No tax, fees, or account types are modelled: use it to understand the shape of a good plan, not to compute an after-tax budget. The default market assumptions come from US history 1926&ndash;2019, which may flatter the future &mdash; it is worth re-solving with a lower equity return. A plan ending &ldquo;below zero&rdquo; here means leaning on resources outside the pot (home equity, downsizing), not bankruptcy. The horizon is fixed: it does not model an uncertain lifespan. Finally, if the ceiling is tiny relative to the pot (a 1&ndash;2% withdrawal rate), the model&rsquo;s trade-off quietly becomes spending versus worst-case <i>estate</i> size &mdash; it will hold the floor early whenever &kappa; &gt; 1 because a withheld pound compounds into the worst-case leftover at &kappa; times the value of a spent one. The tool flags this regime in the comparison tab.</div>
+    </div>
+
+  </div>
+</div>
+
+<footer id="foot">
+Implements the pre-commitment EW&ndash;ES objective of Forsyth (2021), "A Stochastic Control Approach to Defined Contribution Plan Decumulation", <i>North American Actuarial Journal</i> 26(2) 227&ndash;251 (arXiv:2008.06598), via 1-D wealth-grid dynamic programming (valid by the paper's Prop. 6.1: optimal controls depend on total wealth only), stratified-quadrature transition expectations, and outer golden-section search over the embedded VaR level W*. Engine validated against the paper: constant-strategy ES/medians (Table 10.1) within ~1%; constant-withdrawal optimal-allocation case ES &minus;198.2 vs published &minus;196.1 (Table 11.2); at the paper's (&kappa;, W*) the published frontier point is reproduced (EW 54.37 vs 54.32, ES &minus;213.7 vs &minus;209.5, Table A.2). The &kappa; &rarr; frontier-point mapping is ill-conditioned where the frontier is flat (noted in the paper), so judge strategies by realised ES/EW, not by &kappa; itself. Everything is in real terms; insolvent wealth accrues at the bond process (implicit borrowing capacity, e.g. housing equity). No tax, fees, or wrapper structure modelled. Pre-commitment ES = induced time-consistent target-shortfall strategy (implementable). For illustration only &mdash; not advice.
+</footer>
+</div>
+
+<script type="javascript/worker" id="wk">
+'use strict';
+// ===== EW-ES optimal decumulation engine (Forsyth 2021, reduced 1-D DP) =====
+function mulberry32(seed){let a=seed>>>0;return function(){a|=0;a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function makeNormals(rng){let c=null;return function(){if(c!==null){const v=c;c=null;return v;}let u=0;do{u=rng();}while(u===0);const v=rng(),r=Math.sqrt(-2*Math.log(u));c=r*Math.sin(2*Math.PI*v);return r*Math.cos(2*Math.PI*v);};}
+function poisson(rng,lam){const L=Math.exp(-lam);let k=0,p=1;do{k++;p*=rng();}while(p>L);return k-1;}
+function kouKappa(pu,e1,e2){return(pu*e1)/(e1-1)+((1-pu)*e2)/(e2+1)-1;}
+function sampleJumpSum(rng,lam,pu,e1,e2){const n=poisson(rng,lam);let s=0;for(let i=0;i<n;i++){const u=rng();if(rng()<pu)s+=-Math.log(1-u)/e1;else s-=-Math.log(1-u)/e2;}return s;}
+function drawJointReturns(N,mkt,seed){
+  const rng=mulberry32(seed),nrm=makeNormals(rng);
+  const ks=kouKappa(mkt.puS,mkt.e1S,mkt.e2S),kb=kouKappa(mkt.puB,mkt.e1B,mkt.e2B);
+  const dS=mkt.muS-mkt.lamS*ks-0.5*mkt.sigS*mkt.sigS,dB=mkt.muB-mkt.lamB*kb-0.5*mkt.sigB*mkt.sigB;
+  const c=Math.sqrt(Math.max(0,1-mkt.rho*mkt.rho));
+  const Rs=new Float64Array(N),Rb=new Float64Array(N);
+  for(let k=0;k<N;k++){
+    const z1=nrm(),z2=nrm(),zb=mkt.rho*z1+c*z2;
+    Rs[k]=Math.exp(dS+mkt.sigS*z1+sampleJumpSum(rng,mkt.lamS,mkt.puS,mkt.e1S,mkt.e2S));
+    Rb[k]=Math.exp(dB+mkt.sigB*zb+sampleJumpSum(rng,mkt.lamB,mkt.puB,mkt.e1B,mkt.e2B));
+  }
+  return{Rs,Rb};
+}
+function buildGrid(nW,wMin,wMax,scale){
+  const u0=Math.asinh(wMin/scale),u1=Math.asinh(wMax/scale),du=(u1-u0)/(nW-1);
+  const w=new Float64Array(nW);
+  for(let i=0;i<nW;i++)w[i]=scale*Math.sinh(u0+i*du);
+  return{w,u0,du,scale,nW};
+}
+function bucketise(Rp,nB){
+  const s=Float64Array.from(Rp).sort();const N=s.length;const out=new Float64Array(nB);
+  for(let b=0;b<nB;b++){const lo=Math.floor(b*N/nB),hi=Math.floor((b+1)*N/nB);let t=0;for(let i=lo;i<hi;i++)t+=s[i];out[b]=t/(hi-lo);}
+  return out;
+}
+function buildQuadrature(pGrid,Rs,Rb,nB){
+  const N=Rs.length,nP=pGrid.length,Rq=[],tmp=new Float64Array(N);
+  for(let j=0;j<nP;j++){const p=pGrid[j];for(let k=0;k<N;k++)tmp[k]=p*Rs[k]+(1-p)*Rb[k];Rq.push(bucketise(tmp,nB));}
+  return{Rq,RbQ:bucketise(Rb,nB)};
+}
+function precomputeTransitions(grid,pGrid,Rq){
+  const{w,u0,du,scale,nW}=grid;const nP=pGrid.length,N=Rq[0].length;
+  const idx=new Int32Array(nW*nP*N),frac=new Float64Array(nW*nP*N);
+  let m=0;
+  for(let i=0;i<nW;i++){const wi=w[i];
+    for(let j=0;j<nP;j++){const r=Rq[j];
+      for(let k=0;k<N;k++){
+        const wt=wi*r[k];let x=(Math.asinh(wt/scale)-u0)/du;
+        if(x<=0){idx[m]=0;frac[m]=0;}
+        else if(x>=nW-1){idx[m]=nW-2;frac[m]=1;}
+        else{const f=Math.floor(x);idx[m]=f;let fr=(wt-w[f])/(w[f+1]-w[f]);frac[m]=fr<0?0:(fr>1?1:fr);}
+        m++;
+      }}}
+  return{idx,frac,N,nP};
+}
+function precomputeBondTransitions(grid,RbQ){
+  const{w,u0,du,scale,nW}=grid;const N=RbQ.length;
+  const idx=new Int32Array(nW*N),frac=new Float64Array(nW*N);
+  let m=0;
+  for(let i=0;i<nW;i++){const wi=w[i];
+    for(let k=0;k<N;k++){
+      const wt=wi*RbQ[k];let x=(Math.asinh(wt/scale)-u0)/du;
+      if(x<=0){idx[m]=0;frac[m]=0;}
+      else if(x>=nW-1){idx[m]=nW-2;frac[m]=1;}
+      else{const f=Math.floor(x);idx[m]=f;let fr=(wt-w[f])/(w[f+1]-w[f]);frac[m]=fr<0?0:(fr>1?1:fr);}
+      m++;
+    }}
+  return{idx,frac,N};
+}
+function interpGrid(grid,arr,wt){
+  const{w,u0,du,scale,nW}=grid;
+  let x=(Math.asinh(wt/scale)-u0)/du;
+  if(x<=0){const s=(arr[1]-arr[0])/(w[1]-w[0]);return arr[0]+s*(wt-w[0]);}
+  if(x>=nW-1){const s=(arr[nW-1]-arr[nW-2])/(w[nW-1]-w[nW-2]);return arr[nW-1]+s*(wt-w[nW-1]);}
+  const f=Math.floor(x),fr=(wt-w[f])/(w[f+1]-w[f]);
+  return arr[f]+fr*(arr[f+1]-arr[f]);
+}
+function solveDP(cfg,grid,trans,transB,Wstar){
+  const{w,nW}=grid;const{kappa,alpha,eps,qMin,qMax,nQ,M}=cfg;
+  const{idx,frac,N,nP}=trans;
+  const qGrid=new Float64Array(nQ);
+  for(let iq=0;iq<nQ;iq++)qGrid[iq]=qMin+(qMax-qMin)*iq/((nQ-1)||1);
+  const qCtl=[],pCtl=[];
+  let V=new Float64Array(nW);
+  {const qc=new Float64Array(nW);
+   for(let i=0;i<nW;i++){let best=-Infinity,bq=qMin;
+     for(let iq=0;iq<nQ;iq++){const q=qGrid[iq],wt=w[i]-q;
+       const val=q+kappa*(Wstar+Math.min(wt-Wstar,0)/alpha)+eps*wt;
+       if(val>best){best=val;bq=q;}}
+     V[i]=best;qc[i]=bq;}
+   qCtl[M]=qc;pCtl[M]=null;}
+  const U=new Float64Array(nW),pArg=new Float64Array(nW);
+  const invN=1/N;
+  for(let t=M-1;t>=0;t--){
+    let m=0;
+    for(let i=0;i<nW;i++){
+      if(w[i]<=0){
+        let s=0;const mb=i*N;
+        for(let k=0;k<N;k++){const ii=transB.idx[mb+k],ff=transB.frac[mb+k];s+=V[ii]+ff*(V[ii+1]-V[ii]);}
+        U[i]=s*invN;pArg[i]=0;m+=nP*N;
+      }else{
+        let best=-Infinity,bp=0;
+        for(let j=0;j<nP;j++){
+          let s=0;
+          for(let k=0;k<N;k++){const ii=idx[m],ff=frac[m];s+=V[ii]+ff*(V[ii+1]-V[ii]);m++;}
+          s*=invN;
+          if(s>best){best=s;bp=j;}
+        }
+        U[i]=best;pArg[i]=cfg.pGrid[bp];
+      }
+    }
+    const Vn=new Float64Array(nW),qc=new Float64Array(nW);
+    for(let i=0;i<nW;i++){
+      let best=-Infinity,bq=qMin;
+      for(let iq=0;iq<nQ;iq++){const q=qGrid[iq];
+        const val=q+interpGrid(grid,U,w[i]-q);
+        if(val>best){best=val;bq=q;}}
+      Vn[i]=best;qc[i]=bq;
+    }
+    V=Vn;qCtl[t]=qc;pCtl[t]=Float64Array.from(pArg);
+  }
+  return{V0:V,qCtl,pCtl};
+}
+async function solveEWES(cfg,onProgress,Y){
+  const grid=buildGrid(cfg.nW,cfg.wMin,cfg.wMax,cfg.gridScale);
+  const{Rs,Rb}=drawJointReturns(cfg.nBigDraw,cfg.mkt,cfg.seedQuad);
+  const{Rq,RbQ}=buildQuadrature(cfg.pGrid,Rs,Rb,cfg.nQuad);
+  await Y();
+  const trans=precomputeTransitions(grid,cfg.pGrid,Rq);
+  const transB=precomputeBondTransitions(grid,RbQ);
+  await Y();
+  const evalW=(Ws)=>{const sol=solveDP(cfg,grid,trans,transB,Ws);return{J:interpGrid(grid,sol.V0,cfg.W0),sol};};
+  let bestJ=-Infinity,bestW=0,bestSol=null;
+  const lo0=cfg.WstarLo,hi0=cfg.WstarHi,nC=cfg.WstarCoarse;
+  let done=0,total=nC+cfg.WstarGolden;
+  for(let i=0;i<nC;i++){
+    const Ws=lo0+(hi0-lo0)*i/(nC-1);
+    const{J,sol}=evalW(Ws);
+    if(J>bestJ){bestJ=J;bestW=Ws;bestSol=sol;}
+    done++;if(onProgress)onProgress(done/total);
+    await Y();
+  }
+  const step=(hi0-lo0)/(nC-1);
+  let a=bestW-step,b=bestW+step;
+  const gr=(Math.sqrt(5)-1)/2;
+  let c=b-gr*(b-a),d=a+gr*(b-a);
+  let rc=evalW(c);await Y();
+  let rd=evalW(d);
+  done++;if(onProgress)onProgress(done/total);
+  await Y();
+  for(let it=0;it<cfg.WstarGolden-1;it++){
+    if(rc.J>rd.J){b=d;d=c;rd=rc;c=b-gr*(b-a);rc=evalW(c);}
+    else{a=c;c=d;rc=rd;d=a+gr*(b-a);rd=evalW(d);}
+    done++;if(onProgress)onProgress(done/total);
+    await Y();
+  }
+  if(rc.J>bestJ){bestJ=rc.J;bestW=c;bestSol=rc.sol;}
+  if(rd.J>bestJ){bestJ=rd.J;bestW=d;bestSol=rd.sol;}
+  return{grid,Wstar:bestW,J:bestJ,sol:bestSol};
+}
+function forwardMC(cfg,grid,sol,nPaths,seed){
+  const M=cfg.M,mkt=cfg.mkt;
+  const rng=mulberry32(seed),nrm=makeNormals(rng);
+  const ks=kouKappa(mkt.puS,mkt.e1S,mkt.e2S),kb=kouKappa(mkt.puB,mkt.e1B,mkt.e2B);
+  const dS=mkt.muS-mkt.lamS*ks-0.5*mkt.sigS*mkt.sigS,dB=mkt.muB-mkt.lamB*kb-0.5*mkt.sigB*mkt.sigB;
+  const c=Math.sqrt(Math.max(0,1-mkt.rho*mkt.rho));
+  const wPathY=[],qPathY=[],pPathY=[],wBenchY=[],wArvaY=[],qArvaY=[];
+  for(let t=0;t<=M;t++){wPathY.push(new Float64Array(nPaths));qPathY.push(new Float64Array(nPaths));wBenchY.push(new Float64Array(nPaths));wArvaY.push(new Float64Array(nPaths));qArvaY.push(new Float64Array(nPaths));}
+  for(let t=0;t<M;t++)pPathY.push(new Float64Array(nPaths));
+  const totQ=new Float64Array(nPaths),totQb=new Float64Array(nPaths),totQa=new Float64Array(nPaths);
+  const pB=cfg.benchP,qB=cfg.benchQ;
+  const muBlend=pB*mkt.muS+(1-pB)*mkt.muB;
+  const arvaR=Math.exp(muBlend)-1;
+  const wNow=new Float64Array(nPaths);wNow.fill(cfg.W0);
+  const wBench=new Float64Array(nPaths);wBench.fill(cfg.W0);
+  const wArva=new Float64Array(nPaths);wArva.fill(cfg.W0);
+  const wArvaC=new Float64Array(nPaths);wArvaC.fill(cfg.W0);
+  const totQc=new Float64Array(nPaths);
+  const mqO=new Float64Array(nPaths).fill(1e18),mqA=new Float64Array(nPaths).fill(1e18),mqC=new Float64Array(nPaths).fill(1e18);
+  for(let t=0;t<=M;t++){
+    const qc=sol.qCtl[t];
+    for(let s=0;s<nPaths;s++){
+      wPathY[t][s]=wNow[s];wBenchY[t][s]=wBench[s];wArvaY[t][s]=wArva[s];
+      let q=interpGrid(grid,qc,wNow[s]);
+      q=Math.min(cfg.qMax,Math.max(cfg.qMin,q));
+      qPathY[t][s]=q;totQ[s]+=q;
+      let wp=wNow[s]-q;
+      totQb[s]+=qB;
+      let wbp=wBench[s]-qB;
+      const nRem=M-t+1;
+      let qa;
+      if(arvaR===0)qa=Math.max(0,wArva[s]/nRem);
+      else{const af=(1-Math.pow(1+arvaR,-nRem))/arvaR*(1+arvaR);qa=Math.max(0,wArva[s]/af);}
+      qArvaY[t][s]=qa;totQa[s]+=qa;
+      let wap=wArva[s]-qa;
+      let qc2;
+      if(arvaR===0)qc2=wArvaC[s]>0?wArvaC[s]/nRem:cfg.qMin;
+      else{const af2=(1-Math.pow(1+arvaR,-nRem))/arvaR*(1+arvaR);qc2=wArvaC[s]>0?wArvaC[s]/af2:cfg.qMin;}
+      qc2=Math.min(cfg.qMax,Math.max(cfg.qMin,qc2));
+      totQc[s]+=qc2;
+      let wcp=wArvaC[s]-qc2;
+      if(q<mqO[s])mqO[s]=q; if(qa<mqA[s])mqA[s]=qa; if(qc2<mqC[s])mqC[s]=qc2;
+      if(t===M){wNow[s]=wp;wBench[s]=wbp;wArva[s]=wap;wArvaC[s]=wcp;continue;}
+      let p=wp>0?interpGrid(grid,sol.pCtl[t],wp):0;
+      p=Math.min(1,Math.max(0,p));
+      pPathY[t][s]=p;
+      const z1=nrm(),z2=nrm(),zb=mkt.rho*z1+c*z2;
+      const RsD=Math.exp(dS+mkt.sigS*z1+sampleJumpSum(rng,mkt.lamS,mkt.puS,mkt.e1S,mkt.e2S));
+      const RbD=Math.exp(dB+mkt.sigB*zb+sampleJumpSum(rng,mkt.lamB,mkt.puB,mkt.e1B,mkt.e2B));
+      wNow[s]=wp>0?wp*(p*RsD+(1-p)*RbD):wp*RbD;
+      wBench[s]=wbp>0?wbp*(pB*RsD+(1-pB)*RbD):wbp*RbD;
+      const RpB=pB*RsD+(1-pB)*RbD;
+      wArva[s]=wap>0?wap*RpB:wap*RbD;
+      wArvaC[s]=wcp>0?wcp*RpB:wcp*RbD;
+    }
+  }
+  return{wPathY,qPathY,pPathY,wBenchY,wArvaY,qArvaY,wT:wNow,totQ,wTb:wBench,totQb,wTa:wArva,totQa,wTc:wArvaC,totQc,mqO,mqA,mqC};
+}
+function quant(sorted,q){const n=sorted.length;return sorted[Math.min(n-1,Math.max(0,Math.floor(q*n)))];}
+function pctsOf(arr,qs){const s=Float64Array.from(arr).sort();return qs.map(q=>quant(s,q));}
+function esVar(arr,alpha){
+  const s=Float64Array.from(arr).sort();
+  const k=Math.max(1,Math.floor(alpha*s.length));
+  let t=0;for(let i=0;i<k;i++)t+=s[i];
+  return{es:t/k,varq:s[k-1]};
+}
+function mean(a){let s=0;for(let i=0;i<a.length;i++)s+=a[i];return s/a.length;}
+
+async function runSolve(cfg,emit,Y){
+  const post=(f,st)=>emit({type:'progress',frac:f,stage:st});
+  post(0.02,'Calibrating stratified quadrature');
+  const t0=Date.now();
+  const r=await solveEWES(cfg,(f)=>post(0.02+0.72*f,'Optimising over W* (golden-section on the VaR level)'),Y);
+  post(0.76,'Simulating '+cfg.nPaths.toLocaleString()+' forward paths');
+  await Y();
+  const fw=forwardMC(cfg,r.grid,r.sol,cfg.nPaths,cfg.seedMC);
+  post(0.92,'Computing statistics');
+  await Y();
+  const M=cfg.M,qs=[0.05,0.25,0.5,0.75,0.95];
+  const wealthPct={p5:[],p25:[],p50:[],p75:[],p95:[]},qPct={p5:[],p25:[],p50:[],p75:[],p95:[]};
+  const benchW50=[],arvaW50=[],arvaQ50=[],pMed=[];
+  for(let t=0;t<=M;t++){
+    const wp=pctsOf(fw.wPathY[t],qs);
+    wealthPct.p5.push(wp[0]);wealthPct.p25.push(wp[1]);wealthPct.p50.push(wp[2]);wealthPct.p75.push(wp[3]);wealthPct.p95.push(wp[4]);
+    const qp=pctsOf(fw.qPathY[t],qs);
+    qPct.p5.push(qp[0]);qPct.p25.push(qp[1]);qPct.p50.push(qp[2]);qPct.p75.push(qp[3]);qPct.p95.push(qp[4]);
+    benchW50.push(pctsOf(fw.wBenchY[t],[0.5])[0]);
+    arvaW50.push(pctsOf(fw.wArvaY[t],[0.5])[0]);
+    arvaQ50.push(pctsOf(fw.qArvaY[t],[0.5])[0]);
+    if(t<M)pMed.push(pctsOf(fw.pPathY[t],[0.5])[0]);
+  }
+  // heatmaps on uniform display grid
+  const rows=90,wLo=0,wHi=2.5*cfg.W0;
+  const pMat=new Float64Array(rows*M),qMat=new Float64Array(rows*(M+1));
+  for(let ri=0;ri<rows;ri++){
+    const wt=wLo+(wHi-wLo)*(ri+0.5)/rows;
+    for(let t=0;t<M;t++)pMat[ri*M+t]=Math.min(1,Math.max(0,interpGrid(r.grid,r.sol.pCtl[t],wt)));
+    for(let t=0;t<=M;t++){
+      let q=interpGrid(r.grid,r.sol.qCtl[t],wt);
+      q=Math.min(cfg.qMax,Math.max(cfg.qMin,q));
+      qMat[ri*(M+1)+t]=cfg.qMax>cfg.qMin?(q-cfg.qMin)/(cfg.qMax-cfg.qMin):0;
+    }
+  }
+  const evOpt=esVar(fw.wT,cfg.alpha),evB=esVar(fw.wTb,cfg.alpha),evA=esVar(fw.wTa,cfg.alpha),evC=esVar(fw.wTc,cfg.alpha);
+  const minq5=(a)=>pctsOf(a,[0.05])[0];
+  const ruin=(a)=>{let n=0;for(let i=0;i<a.length;i++)if(a[i]<-1e-6)n++;return n/a.length;};
+  const med=(a)=>pctsOf(a,[0.5])[0];
+  // P(at ceiling) at year min(10,M)
+  const yC=Math.min(10,M);let nc=0;
+  for(let i=0;i<cfg.nPaths;i++)if(fw.qPathY[yC][i]>=cfg.qMax-1e-9)nc++;
+  const payload={
+    Wstar:r.Wstar,M,
+    wealthPct,qPct,benchW50,arvaW50,arvaQ50,pMed,
+    heat:{rows,wLo,wHi,pMat,qMat},
+    stats:{
+      opt:{ewAvg:mean(fw.totQ)/(M+1),ewTot:mean(fw.totQ),es:evOpt.es,varq:evOpt.varq,med:med(fw.wT),ruin:ruin(fw.wT),minq:minq5(fw.mqO)},
+      bench:{ewAvg:mean(fw.totQb)/(M+1),ewTot:mean(fw.totQb),es:evB.es,varq:evB.varq,med:med(fw.wTb),ruin:ruin(fw.wTb),minq:cfg.benchQ},
+      arvac:{ewAvg:mean(fw.totQc)/(M+1),ewTot:mean(fw.totQc),es:evC.es,varq:evC.varq,med:med(fw.wTc),ruin:ruin(fw.wTc),minq:minq5(fw.mqC)},
+      arva:{ewAvg:mean(fw.totQa)/(M+1),ewTot:mean(fw.totQa),es:evA.es,varq:evA.varq,med:med(fw.wTa),ruin:ruin(fw.wTa),minq:minq5(fw.mqA)}
+    },
+    pCeil:nc/cfg.nPaths,
+    secs:(Date.now()-t0)/1000
+  };
+  emit({type:'done',payload});
+}
+if(typeof importScripts==='function'){
+  onmessage=function(ev){runSolve(ev.data.cfg,(m)=>postMessage(m),()=>Promise.resolve());};
+}
+</script>
+
+<script>
+'use strict';
+const G=id=>document.getElementById(id);
+const FF="'Gotham','Segoe UI',sans-serif";
+const MKT_DEFAULTS={muS:0.0877,sigS:0.1459,lamS:0.3191,puS:0.2333,e1S:4.4,e2S:5.5,muB:0.0239,sigB:0.0538,lamB:0.383,puB:0.6111,e1B:16,e2B:17.5,rho:0.05};
+const QUALITY={
+  fast:{nW:400,nQuad:160,nBigDraw:200000,coarse:11,golden:7,nPaths:20000},
+  std:{nW:600,nQuad:256,nBigDraw:300000,coarse:15,golden:9,nPaths:40000},
+  high:{nW:800,nQuad:384,nBigDraw:500000,coarse:19,golden:11,nPaths:80000}
+};
+const S={pot:1000000,qmin:40000,qmax:65000,yr:30,kapLog:0.7,alpha:0.05,bp:0.4,quality:'std',...MKT_DEFAULTS};
+
+/* ── URL state ── */
+const URLKEYS=['pot','qmin','qmax','yr','kapLog','alpha','bp','quality','muS','sigS','lamS','puS','e1S','e2S','muB','sigB','lamB','puB','e1B','e2B','rho'];
+function readURL(){
+  const u=new URLSearchParams(location.search);
+  URLKEYS.forEach(k=>{if(u.has(k)){const v=u.get(k);S[k]=(k==='quality')?v:+v;}});
+}
+function makeURL(){
+  const u=new URLSearchParams();
+  URLKEYS.forEach(k=>u.set(k,S[k]));
+  return location.origin+location.pathname+'?'+u.toString();
+}
+
+/* ── formatters ── */
+const pound=v=>(v<0?'\u2212\u00A3':'\u00A3')+Math.round(Math.abs(v)).toLocaleString('en-GB');
+const poundK=v=>{const a=Math.abs(v),s=v<0?'\u2212\u00A3':'\u00A3';return a>=1e6?s+(a/1e6).toFixed(2)+'m':a>=1e3?s+Math.round(a/1e3)+'k':s+Math.round(a);};
+const pf=v=>(v*100).toFixed(1)+'%';
+
+/* ── controls binding ── */
+const SLIDERS=[['s-pot','pot'],['s-qmin','qmin'],['s-qmax','qmax'],['s-yr','yr'],['s-kap','kapLog'],['s-bp','bp'],
+  ['s-muS','muS'],['s-sigS','sigS'],['s-lamS','lamS'],['s-puS','puS'],['s-e1S','e1S'],['s-e2S','e2S'],
+  ['s-muB','muB'],['s-sigB','sigB'],['s-lamB','lamB'],['s-puB','puB'],['s-e1B','e1B'],['s-e2B','e2B'],['s-rho','rho']];
+function setStale(){G('btn-run').classList.add('stale');G('btn-run').textContent='Solve (parameters changed)';}
+function bindAll(){
+  SLIDERS.forEach(([id,key])=>{
+    G(id).addEventListener('input',function(){
+      let v=+this.value;
+      if(key==='bp')v=v/100;
+      S[key]=v;
+      if(key==='qmin'&&S.qmin>S.qmax){S.qmax=S.qmin;G('s-qmax').value=S.qmax;}
+      if(key==='qmax'&&S.qmax<S.qmin){S.qmin=S.qmax;G('s-qmin').value=S.qmin;}
+      refreshLabels();setStale();
+    });
+  });
+  G('s-alpha').addEventListener('change',function(){S.alpha=+this.value;refreshLabels();setStale();});
+  G('s-quality').addEventListener('change',function(){S.quality=this.value;setStale();});
+  G('btn-reset').addEventListener('click',()=>{
+    Object.assign(S,MKT_DEFAULTS);
+    Object.entries({'s-muS':S.muS,'s-sigS':S.sigS,'s-lamS':S.lamS,'s-puS':S.puS,'s-e1S':S.e1S,'s-e2S':S.e2S,'s-muB':S.muB,'s-sigB':S.sigB,'s-lamB':S.lamB,'s-puB':S.puB,'s-e1B':S.e1B,'s-e2B':S.e2B,'s-rho':S.rho}).forEach(([id,v])=>G(id).value=v);
+    refreshLabels();setStale();
+  });
+  ['mkt','eng'].forEach(id=>{
+    G(id+'-hdr').addEventListener('click',()=>{
+      G(id+'-hdr').classList.toggle('open');G(id+'-body').classList.toggle('open');
+    });
+  });
+  G('btn-link').addEventListener('click',async function(){
+    try{await navigator.clipboard.writeText(makeURL());this.textContent='Copied \u2713';setTimeout(()=>this.textContent='Copy shareable link',1500);}
+    catch(e){prompt('Copy this link:',makeURL());}
+  });
+  G('btn-run').addEventListener('click',run);
+  const gmode=(m)=>{
+    G('gt-cards').classList.toggle('active',m==='cards');
+    G('gt-essay').classList.toggle('active',m==='essay');
+    G('guide-cards').style.display=m==='cards'?'grid':'none';
+    G('guide-essay').style.display=m==='essay'?'block':'none';
+  };
+  G('gt-cards').addEventListener('click',()=>gmode('cards'));
+  G('gt-essay').addEventListener('click',()=>gmode('essay'));
+  const tabs=['fan','wd','heat','cmp'];
+  tabs.forEach(t=>G('tab-'+t).addEventListener('click',()=>{
+    tabs.forEach(x=>{G('tab-'+x).classList.toggle('active',x===t);G('pnl-'+x).style.display=x===t?'block':'none';});
+    if(t==='fan'&&fanChart)fanChart.resize();
+    if(t==='wd'&&wdChart)wdChart.resize();
+    if(t==='heat'&&lastPayload)drawHeatmaps(lastPayload);
+  }));
+}
+function refreshLabels(){
+  G('v-pot').textContent=pound(S.pot);
+  G('v-qmin').textContent=pound(S.qmin)+'/yr';
+  G('v-qmax').textContent=pound(S.qmax)+'/yr';
+  G('sub-qmin').textContent='Essential spending: '+(S.qmin/S.pot*100).toFixed(2)+'% initial withdrawal rate';
+  G('sub-qmax').textContent='Discretionary ceiling: '+(S.qmax/S.pot*100).toFixed(2)+'% initial withdrawal rate';
+  G('v-yr').textContent=S.yr+' yrs';
+  G('v-kap').textContent=Math.pow(10,S.kapLog).toFixed(2);
+  G('v-bp').textContent=Math.round(S.bp*100)+'%';
+  G('v-muS').textContent=pf(S.muS);G('v-sigS').textContent=pf(S.sigS);G('v-lamS').textContent=S.lamS.toFixed(2);
+  G('v-puS').textContent=S.puS.toFixed(2);G('v-e1S').textContent=S.e1S.toFixed(1);G('v-e2S').textContent=S.e2S.toFixed(1);
+  G('v-muB').textContent=pf(S.muB);G('v-sigB').textContent=pf(S.sigB);G('v-lamB').textContent=S.lamB.toFixed(2);
+  G('v-puB').textContent=S.puB.toFixed(2);G('v-e1B').textContent=S.e1B.toFixed(1);G('v-e2B').textContent=S.e2B.toFixed(1);
+  G('v-rho').textContent=S.rho.toFixed(2);
+}
+function syncSliders(){
+  G('s-pot').value=S.pot;G('s-qmin').value=S.qmin;G('s-qmax').value=S.qmax;G('s-yr').value=S.yr;
+  G('s-kap').value=S.kapLog;G('s-alpha').value=String(S.alpha);G('s-bp').value=Math.round(S.bp*100);
+  G('s-quality').value=S.quality;
+  G('s-muS').value=S.muS;G('s-sigS').value=S.sigS;G('s-lamS').value=S.lamS;G('s-puS').value=S.puS;G('s-e1S').value=S.e1S;G('s-e2S').value=S.e2S;
+  G('s-muB').value=S.muB;G('s-sigB').value=S.sigB;G('s-lamB').value=S.lamB;G('s-puB').value=S.puB;G('s-e1B').value=S.e1B;G('s-e2B').value=S.e2B;
+  G('s-rho').value=S.rho;
+}
+
+/* ── worker (with main-thread fallback for sandboxed hosts that block blob workers) ── */
+let worker=null,busy=false,lastPayload=null,lastUnit=1,workerOK=null,inlineRun=null;
+function makeWorker(){
+  const s=G('wk').textContent;
+  return new Worker(URL.createObjectURL(new Blob([s],{type:'application/javascript'})));
+}
+function getInlineRun(){
+  if(!inlineRun)inlineRun=new Function(G('wk').textContent+'\n;return runSolve;')();
+  return inlineRun;
+}
+function solveError(msg){
+  busy=false;
+  G('btn-run').disabled=false;G('btn-run').textContent='Solve';
+  G('prog-wrap').style.display='none';G('prog-lbl').style.display='none';
+  G('overlay').style.display='none';
+  alert('Solve failed: '+msg);
+}
+function run(){
+  if(busy)return;
+  busy=true;
+  G('btn-run').disabled=true;G('btn-run').classList.remove('stale');G('btn-run').textContent='Solving\u2026';
+  G('prog-wrap').style.display='block';G('prog-lbl').style.display='block';G('prog-bar').style.width='2%';
+  G('overlay').style.display='flex';
+  const Q=QUALITY[S.quality];
+  const unit=S.pot/1000;           // internal units: pot normalised to 1000
+  lastUnit=unit;
+  const kappa=Math.pow(10,S.kapLog);
+  const cfg={
+    mkt:{muS:S.muS,sigS:S.sigS,lamS:S.lamS,puS:S.puS,e1S:S.e1S,e2S:S.e2S,
+         muB:S.muB,sigB:S.sigB,lamB:S.lamB,puB:S.puB,e1B:S.e1B,e2B:S.e2B,rho:S.rho},
+    W0:1000,M:S.yr,
+    qMin:S.qmin/unit,qMax:S.qmax/unit,nQ:26,
+    kappa,alpha:S.alpha,eps:1e-6,
+    pGrid:Array.from({length:21},(_,i)=>i/20),
+    nW:Q.nW,wMin:-2500,wMax:60000,gridScale:100,
+    nQuad:Q.nQuad,nBigDraw:Q.nBigDraw,seedQuad:12345,
+    WstarLo:-2000,WstarHi:6000,WstarCoarse:Q.coarse,WstarGolden:Q.golden,
+    benchP:S.bp,benchQ:S.qmin/unit,
+    nPaths:Q.nPaths,seedMC:424242
+  };
+  let finished=false;
+  const deliver=(msg)=>{
+    if(msg.type==='progress'){
+      G('prog-bar').style.width=(msg.frac*100).toFixed(0)+'%';
+      G('prog-lbl').textContent=msg.stage;
+    }else if(msg.type==='done'){
+      finished=true;busy=false;
+      G('btn-run').disabled=false;G('btn-run').textContent='Solve';
+      G('prog-wrap').style.display='none';G('prog-lbl').style.display='none';
+      G('overlay').style.display='none';
+      lastPayload=msg.payload;
+      render(msg.payload,unit);
+    }
+  };
+  const inline=()=>{
+    G('prog-lbl').textContent='Running on main thread (worker unavailable in this host)';
+    try{
+      getInlineRun()(cfg,deliver,()=>new Promise(r=>setTimeout(r,0))).catch(e=>solveError(e.message||String(e)));
+    }catch(e){solveError(e.message||String(e));}
+  };
+  if(workerOK===false){inline();return;}
+  try{
+    if(worker)worker.terminate();
+    worker=makeWorker();
+    worker.onmessage=(ev)=>{workerOK=true;deliver(ev.data);};
+    worker.onerror=()=>{
+      if(!finished&&workerOK!==true){workerOK=false;try{worker.terminate();}catch(e){}inline();}
+      else if(!finished){solveError('worker error');}
+    };
+    worker.postMessage({cfg});
+  }catch(e){
+    workerOK=false;inline();
+  }
+}
+
+/* ── charts ── */
+let fanChart=null,wdChart=null;
+function initCharts(){
+  const ax={y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>poundK(v),font:{family:FF,size:11}}},x:{grid:{display:false},ticks:{font:{family:FF,size:10},maxTicksLimit:14}}};
+  fanChart=new Chart(G('ch-fan').getContext('2d'),{type:'line',data:{labels:[],datasets:[
+    {label:'_p95',data:[],fill:'+1',backgroundColor:'rgba(65,107,169,0.12)',borderColor:'transparent',pointRadius:0,borderWidth:0,tension:.35},
+    {label:'_p5',data:[],fill:false,borderColor:'transparent',pointRadius:0,borderWidth:0,tension:.35},
+    {label:'_p75',data:[],fill:'+1',backgroundColor:'rgba(65,107,169,0.17)',borderColor:'transparent',pointRadius:0,borderWidth:0,tension:.35},
+    {label:'_p25',data:[],fill:false,borderColor:'transparent',pointRadius:0,borderWidth:0,tension:.35},
+    {label:'Median (optimal)',data:[],fill:false,borderColor:'#416BA9',pointRadius:0,borderWidth:2.5,tension:.35},
+    {label:'Median, constant floor',data:[],fill:false,borderColor:'#BBBBBB',borderDash:[6,3],pointRadius:0,borderWidth:1.8,tension:.35},
+    {label:'Median, ARVA/PMT',data:[],fill:false,borderColor:'#B14FC5',borderDash:[6,3],pointRadius:0,borderWidth:1.8,tension:.35}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',filter:i=>!i.dataset.label.startsWith('_'),callbacks:{label:c=>' '+c.dataset.label+': '+pound(c.raw)}}},scales:ax}});
+  wdChart=new Chart(G('ch-wd').getContext('2d'),{type:'line',data:{labels:[],datasets:[
+    {label:'_p75',data:[],fill:'+1',backgroundColor:'rgba(65,107,169,0.18)',borderColor:'transparent',pointRadius:0,borderWidth:0,tension:.2},
+    {label:'_p25',data:[],fill:false,borderColor:'transparent',pointRadius:0,borderWidth:0,tension:.2},
+    {label:'Median withdrawal (optimal)',data:[],fill:false,borderColor:'#416BA9',pointRadius:0,borderWidth:2.5,tension:.2},
+    {label:'Median, ARVA/PMT',data:[],fill:false,borderColor:'#B14FC5',borderDash:[6,3],pointRadius:0,borderWidth:1.8,tension:.2},
+    {label:'Floor',data:[],fill:false,borderColor:'#BBBBBB',borderDash:[2,3],pointRadius:0,borderWidth:1.4,tension:0},
+    {label:'Ceiling',data:[],fill:false,borderColor:'#BBBBBB',borderDash:[2,3],pointRadius:0,borderWidth:1.4,tension:0}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{mode:'index',filter:i=>!i.dataset.label.startsWith('_'),callbacks:{label:c=>' '+c.dataset.label+': '+pound(c.raw)}}},scales:{y:{grid:{color:'#f0f0f0'},ticks:{callback:v=>poundK(v),font:{family:FF,size:11}}},x:{grid:{display:false},ticks:{font:{family:FF,size:10},maxTicksLimit:14}}}}});
+}
+
+/* ── heatmaps ── */
+function rampColor(t){
+  // teal -> blue -> purple (brand secondaries)
+  t=Math.min(1,Math.max(0,t));
+  let r,g,b;
+  if(t<0.5){const u=t/0.5;r=159+(65-159)*u;g=207+(107-207)*u;b=202+(169-202)*u;}
+  else{const u=(t-0.5)/0.5;r=65+(177-65)*u;g=107+(79-107)*u;b=169+(197-169)*u;}
+  return 'rgb('+Math.round(r)+','+Math.round(g)+','+Math.round(b)+')';
+}
+function drawHeat(canvasId,mat,rows,cols,wLo,wHi,unit,M){
+  const cv=G(canvasId);
+  const cssW=cv.clientWidth||520,cssH=340;
+  const dpr=window.devicePixelRatio||1;
+  cv.width=cssW*dpr;cv.height=cssH*dpr;
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+  const mL=56,mB=30,mT=6,mR=34;
+  const pw=cssW-mL-mR,ph=cssH-mT-mB;
+  const cw=pw/cols,chh=ph/rows;
+  for(let ri=0;ri<rows;ri++){
+    for(let ci=0;ci<cols;ci++){
+      ctx.fillStyle=rampColor(mat[ri*cols+ci]);
+      // row 0 = lowest wealth = bottom
+      ctx.fillRect(mL+ci*cw,mT+ph-(ri+1)*chh,cw+0.6,chh+0.6);
+    }
+  }
+  // axes
+  ctx.fillStyle='#888';ctx.font='10px '+FF;
+  ctx.textAlign='right';ctx.textBaseline='middle';
+  const nyt=6;
+  for(let i=0;i<=nyt;i++){
+    const wv=wLo+(wHi-wLo)*i/nyt;
+    const y=mT+ph-ph*i/nyt;
+    ctx.fillText(poundK(wv*unit),mL-6,y);
+    ctx.strokeStyle='rgba(255,255,255,.25)';
+    ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(mL+pw,y);ctx.stroke();
+  }
+  ctx.textAlign='center';ctx.textBaseline='top';
+  const xt=Math.min(7,cols);
+  for(let i=0;i<xt;i++){
+    const t=Math.round((cols-1)*i/(xt-1));
+    ctx.fillText('Yr '+t,mL+(t+0.5)*cw,mT+ph+6);
+  }
+  // colorbar
+  const cbX=mL+pw+8,cbW=10;
+  for(let i=0;i<ph;i++){
+    ctx.fillStyle=rampColor(1-i/ph);
+    ctx.fillRect(cbX,mT+i,cbW,1.5);
+  }
+  ctx.fillStyle='#888';ctx.textAlign='left';
+  ctx.textBaseline='top';ctx.fillText('1',cbX+cbW+3,mT);
+  ctx.textBaseline='bottom';ctx.fillText('0',cbX+cbW+3,mT+ph);
+}
+function drawHeatmaps(pl){
+  const{rows,wLo,wHi,pMat,qMat}=pl.heat;
+  drawHeat('heat-p',pMat,rows,pl.M,wLo,wHi,lastUnit,pl.M);
+  drawHeat('heat-q',qMat,rows,pl.M+1,wLo,wHi,lastUnit,pl.M);
+}
+
+/* ── render ── */
+function render(pl,unit){
+  const M=pl.M,st=pl.stats;
+  const lbls=Array.from({length:M+1},(_,i)=>'Yr '+i);
+  G('hdr-ew').textContent=pound(st.opt.ewAvg*unit);
+  G('kpi-es').textContent=poundK(st.opt.es*unit);
+  G('kpi-es-s').textContent='average ending position across the worst '+(S.alpha*100)+'% of outcomes';
+  G('kpi-var').textContent=poundK(st.opt.varq*unit);
+  G('kpi-med').textContent=poundK(st.opt.med*unit);
+  G('kpi-ruin').textContent=pf(st.opt.ruin);
+  G('kpi-ceil').textContent=pf(pl.pCeil);
+  G('fan-sub').textContent='Pre-withdrawal wealth percentiles across '+QUALITY[S.quality].nPaths.toLocaleString()+' paths \u00B7 solved in '+pl.secs.toFixed(1)+'s \u00B7 W* = '+pound(pl.Wstar*unit)+' \u00B7 all real terms';
+  // fan
+  fanChart.data.labels=lbls;
+  const wp=pl.wealthPct;
+  const mul=a=>a.map(v=>v*unit);
+  [mul(wp.p95),mul(wp.p5),mul(wp.p75),mul(wp.p25),mul(wp.p50),mul(pl.benchW50),mul(pl.arvaW50)].forEach((d,i)=>fanChart.data.datasets[i].data=d);
+  fanChart.update('none');
+  // withdrawals
+  wdChart.data.labels=lbls;
+  const qp=pl.qPct;
+  [mul(qp.p75),mul(qp.p25),mul(qp.p50),mul(pl.arvaQ50),lbls.map(()=>S.qmin),lbls.map(()=>S.qmax)].forEach((d,i)=>wdChart.data.datasets[i].data=d);
+  wdChart.update('none');
+  // heatmaps
+  drawHeatmaps(pl);
+  // comparison table
+  const row=(name,color,s)=>'<tr><td style="color:'+color+'">'+name+'</td><td>'+pound(s.ewAvg*unit)+'</td><td>'+pound(s.minq*unit)+'</td><td>'+poundK(s.ewTot*unit)+'</td><td>'+poundK(s.es*unit)+'</td><td>'+poundK(s.med*unit)+'</td><td>'+pf(s.ruin)+'</td></tr>';
+  G('cmp-body').innerHTML=
+    row('Optimal EW\u2013ES control','#416BA9',st.opt)+
+    row('ARVA / PMT clamped to same floor\u2013ceiling','#2a8a84',st.arvac)+
+    row('ARVA / PMT unclamped (dynamic amortisation)','#B14FC5',st.arva)+
+    row('Constant floor withdrawal','#888',st.bench);
+  const esGapC=(st.arvac.es-st.opt.es)*unit;
+  G('cmp-note').innerHTML='<b>Reading this:</b> \u201CWorst-case income\u201D is the lowest annual withdrawal over the whole horizon, in the worst 1-in-20 paths \u2014 it shows where each strategy\u2019s risk actually lives. '+
+    'Unclamped ARVA never depletes and never leaves an estate shortfall, but only because the <i>income</i> absorbs every shock: its worst-case income of '+pound(st.arva.minq*unit)+'/yr sits below your stated floor. '+
+    'Clamping ARVA to the same floor\u2013ceiling corridor makes it directly comparable to the optimal strategy \u2014 same constraints, same paths \u2014 and the remaining gap ('+poundK(Math.abs(esGapC))+' difference in ES for '+pound(Math.abs(st.arvac.ewAvg-st.opt.ewAvg)*unit)+'/yr difference in income) is the value of optimising withdrawal timing and allocation rather than following the mechanical rule. '+
+    'The constant rule\u2019s apparent safety mostly comes from underspending whenever markets do well \u2014 its typical leftover pot of '+poundK(st.bench.med*unit)+' is money never spent. '+
+    'If the worst-case average is worse than you could absorb, raise \u03BA and re-solve. When comparing any two strategies, compare them at the same worst-case level \u2014 otherwise you are just comparing different amounts of risk-taking.'+
+    (S.qmax/S.pot<0.025?'<br><br><b>Note:</b> your ceiling is only '+(S.qmax/S.pot*100).toFixed(1)+'% of the pot. At withdrawal rates this low, spending barely affects your security either way, so the solver is mostly trading spending against the size of your worst-case leftover estate \u2014 with \u03BA acting as the exchange rate (\u03BA > 1 means it hoards, holding the floor early to fatten the worst-case estate; \u03BA < 1 means it takes the ceiling immediately). If that is not the question you are asking, raise the ceiling to a level you would genuinely enjoy spending, or drop \u03BA below 1.':'');
+}
+
+/* ── boot ── */
+readURL();
+syncSliders();
+refreshLabels();
+bindAll();
+initCharts();
+run();
+window.addEventListener('resize',()=>{if(lastPayload&&G('pnl-heat').style.display!=='none')drawHeatmaps(lastPayload);});
+</script>
+</body>
+</html>
